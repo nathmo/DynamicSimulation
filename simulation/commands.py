@@ -1,19 +1,61 @@
 import pybullet as p
+import pybullet_data
+
 
 class CommandHandler:
     def __init__(self, simulator):
         self.simulator = simulator
         self.freeze = False
+        self.camera_distance = 3.0
+        self.camera_yaw = 50.0
+        self.camera_pitch = -35.0
+        self.camera_target = [0, 0, 0]
 
     def process_input(self):
         keys = p.getKeyboardEvents()
-        if ord('f') in keys and keys[ord('f')] & p.KEY_WAS_TRIGGERED:
+
+        if ord('r') in keys and keys[ord('r')] & p.KEY_WAS_TRIGGERED:
+            p.resetSimulation()
+            print("Simulation reset")
+
+        if ord(' ') in keys and keys[ord(' ')] & p.KEY_WAS_TRIGGERED:
             self.freeze = not self.freeze
-            print("Simulation frozen" if self.freeze else "Simulation resumed")
+            print("Simulation paused" if self.freeze else "Simulation resumed")
 
         if not self.freeze:
             self.handle_movement(keys)
 
+        self.handle_camera(keys)
+
     def handle_movement(self, keys):
-        if ord('w') in keys:
-            p.applyExternalForce(self.simulator.robot_id, -1, [10, 0, 0], [0, 0, 0], p.WORLD_FRAME)
+        pass
+    def handle_camera(self, keys):
+        # Pitch and yaw control (WASD)
+        if ord('w') in keys and keys[ord('w')] & p.KEY_IS_DOWN:
+            self.camera_pitch = max(self.camera_pitch - 1, -89)
+        if ord('s') in keys and keys[ord('s')] & p.KEY_IS_DOWN:
+            self.camera_pitch = min(self.camera_pitch + 1, 89)
+        if ord('a') in keys and keys[ord('a')] & p.KEY_IS_DOWN:
+            self.camera_yaw -= 1
+        if ord('d') in keys and keys[ord('d')] & p.KEY_IS_DOWN:
+            self.camera_yaw += 1
+
+        # Zoom control (Q and E)
+        if ord('q') in keys and keys[ord('q')] & p.KEY_IS_DOWN:
+            self.camera_distance = max(self.camera_distance - 0.1, 0.1)
+        if ord('e') in keys and keys[ord('e')] & p.KEY_IS_DOWN:
+            self.camera_distance += 0.1
+
+        # Camera target translation (arrow keys)
+        move_step = 0.1
+        if p.B3G_LEFT_ARROW in keys and keys[p.B3G_LEFT_ARROW] & p.KEY_IS_DOWN:
+            self.camera_target[0] -= move_step
+        if p.B3G_RIGHT_ARROW in keys and keys[p.B3G_RIGHT_ARROW] & p.KEY_IS_DOWN:
+            self.camera_target[0] += move_step
+        if p.B3G_UP_ARROW in keys and keys[p.B3G_UP_ARROW] & p.KEY_IS_DOWN:
+            self.camera_target[1] += move_step
+        if p.B3G_DOWN_ARROW in keys and keys[p.B3G_DOWN_ARROW] & p.KEY_IS_DOWN:
+            self.camera_target[1] -= move_step
+
+        # Update the camera view
+        p.resetDebugVisualizerCamera(self.camera_distance, self.camera_yaw, self.camera_pitch, self.camera_target)
