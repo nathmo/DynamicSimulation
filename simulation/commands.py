@@ -1,6 +1,6 @@
 import pybullet as p
 import pybullet_data
-
+import math
 
 class CommandHandler:
     def __init__(self, simulator):
@@ -29,6 +29,7 @@ class CommandHandler:
 
     def handle_movement(self, keys):
         pass
+
     def handle_camera(self, keys):
         # Pitch and yaw control (WASD)
         if ord('w') in keys and keys[ord('w')] & p.KEY_IS_DOWN:
@@ -46,16 +47,25 @@ class CommandHandler:
         if ord('e') in keys and keys[ord('e')] & p.KEY_IS_DOWN:
             self.camera_distance += 0.1
 
-        # Camera target translation (arrow keys)
+        # Camera target translation relative to camera orientation
         move_step = 0.1
+        yaw_rad = math.radians(self.camera_yaw)
+
+        forward = [math.cos(yaw_rad), math.sin(yaw_rad), 0]
+        right = [-math.sin(yaw_rad), math.cos(yaw_rad), 0]
+
         if p.B3G_LEFT_ARROW in keys and keys[p.B3G_LEFT_ARROW] & p.KEY_IS_DOWN:
-            self.camera_target[0] -= move_step
+            self.camera_target[0] -= forward[0] * move_step
+            self.camera_target[1] -= forward[1] * move_step
         if p.B3G_RIGHT_ARROW in keys and keys[p.B3G_RIGHT_ARROW] & p.KEY_IS_DOWN:
-            self.camera_target[0] += move_step
+            self.camera_target[0] += forward[0] * move_step
+            self.camera_target[1] += forward[1] * move_step
         if p.B3G_UP_ARROW in keys and keys[p.B3G_UP_ARROW] & p.KEY_IS_DOWN:
-            self.camera_target[1] += move_step
+            self.camera_target[0] += right[0] * move_step
+            self.camera_target[1] += right[1] * move_step
         if p.B3G_DOWN_ARROW in keys and keys[p.B3G_DOWN_ARROW] & p.KEY_IS_DOWN:
-            self.camera_target[1] -= move_step
+            self.camera_target[0] -= right[0] * move_step
+            self.camera_target[1] -= right[1] * move_step
 
         # Update the camera view
         p.resetDebugVisualizerCamera(self.camera_distance, self.camera_yaw, self.camera_pitch, self.camera_target)
