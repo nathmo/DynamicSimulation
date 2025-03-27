@@ -2,118 +2,190 @@ import pybullet as p
 import numpy as np
 
 
+class Segment:
+    """Represents a segment (rigid body) in the kinematic chain."""
+
+    def __init__(self, physics_client, shape, mass, position, orientation=[0, 0, 0, 1]):
+        self.physics_client = physics_client
+        self.shape = shape
+        self.mass = mass
+        self.position = position
+        self.orientation = orientation
+        self.body_id = self.create_body()
+
+    def create_body(self):
+        """Create and return a rigid body in PyBullet."""
+        collision_shape = p.createCollisionShape(self.shape[0], halfExtents=self.shape[1])
+        body_id = p.createMultiBody(
+            baseMass=self.mass,
+            baseCollisionShapeIndex=collision_shape,
+            basePosition=self.position,
+            baseOrientation=self.orientation
+        )
+        return body_id
+
+
+class Joint:
+    """Represents a joint connecting two segments."""
+
+    def __init__(self, physics_client, parent, child, joint_type, joint_axis, parent_offset, child_offset):
+        self.physics_client = physics_client
+        self.parent = parent
+        self.child = child
+        self.joint_type = joint_type
+        self.joint_axis = joint_axis
+        self.parent_offset = parent_offset
+        self.child_offset = child_offset
+        self.create_joint()
+        self.visualize_joint()
+
+    def create_joint(self):
+        """Create a joint between two segments."""
+        p.createConstraint(
+            parentBodyUniqueId=self.parent.body_id,
+            parentLinkIndex=-1,
+            childBodyUniqueId=self.child.body_id,
+            childLinkIndex=-1,
+            jointType=self.joint_type,
+            jointAxis=self.joint_axis,
+            parentFramePosition=self.parent_offset,
+            childFramePosition=self.child_offset,
+            parentFrameOrientation=[0, 0, 0, 1],
+            childFrameOrientation=[0, 0, 0, 1]
+        )
+
+    def visualize_joint(self):
+        """Display a red arrow showing the joint axis and attachment point."""
+        start_pos = np.array(self.parent.position) + np.array(self.parent_offset)
+        end_pos = start_pos + 0.2 * np.array(self.joint_axis)  # Scale arrow
+        p.addUserDebugLine(start_pos, end_pos, [1, 0, 0], 2.0)  # Red arrow
+
+
 class Model:
+    """Manages the full kinematic chain, including segments and joints."""
+
     def __init__(self, physics_client, variant="default"):
         self.physics_client = physics_client
         self.bodies = []
+        self.segments = []
+        self.joints = []
+        self.forces = {body: [0, 0, 0] for body in self.bodies}
         self.variant = variant
         self.build_robot()
-        self.forces = {body: [0, 0, 0] for body in self.bodies}  # Initialize forces dictionary
+
+    def get_forces(self):
+        """Retrieve forces acting on each body in the simulation."""
+        for body in self.bodies:
+            total_force = [0, 0, 0]
+
+            # Iterate through all joints in the body
+            num_joints = p.getNumJoints(body)
+            for joint_index in range(num_joints):
+                joint_state = p.getJointState(body, joint_index)
+                joint_force = joint_state[2]  # Tuple (Fx, Fy, Fz)
+                total_force = [total_force[i] + joint_force[i] for i in range(3)]
+
+            # If no joints, approximate force using base velocity
+            if num_joints == 0:
+                lin_vel, _ = p.getBaseVelocity(body)
+                total_force = list(lin_vel)  # Use velocity as an indirect measure of force
+
+            self.forces[body] = total_force  # Store force in dictionary
+
+        return self.forces  # Return forces for all bodies
 
     def build_robot(self):
+        """Select the appropriate kinematic variant."""
+        #self.load_surface()
         if self.variant == "default":
             self.create_robot_default()
+        elif self.variant == "PENDULUM":
+            self.create_robot_variant_pendulum()
         elif self.variant == "A":
             self.create_robot_variant_a()
         else:
             raise ValueError(f"Unknown robot variant: {self.variant}")
 
-    def create_robot_default(self):
-        # Load the floor from the URDF file (output_mesh/plane.urdf)
+    def load_surface(self):
+        """Load the ground surface."""
         plane_id = p.loadURDF("output_mesh/plane.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
         self.bodies.append(plane_id)
 
-        # Define the rectangular body (10 kg mass, 2m length, 0.6m width, 0.1m thickness)
-        rectangle_length = 2.0  # 2m
-        rectangle_width = 0.6  # 60 cm
-        rectangle_thickness = 0.1  # 10 cm thickness
-        rectangle_mass = 10.0  # 10 kg mass
+    def add_segment(self, shape, mass, position, orientation=[0, 0, 0, 1]):
+        """Add a new segment to the model."""
+        segment = Segment(self.physics_client, shape, mass, position, orientation)
+        self.segments.append(segment)
+        self.bodies.append(segment.body_id)
+        return segment
 
-        # Create the rectangle (box shape)
-        rectangle_shape = p.createCollisionShape(p.GEOM_BOX, halfExtents=[rectangle_length / 2, rectangle_width / 2,
-                                                                          rectangle_thickness / 2])
+    def add_joint(self, parent, child, joint_type, joint_axis, parent_offset, child_offset):
+        """Add a joint connecting two segments."""
+        joint = Joint(self.physics_client, parent, child, joint_type, joint_axis, parent_offset, child_offset)
+        self.joints.append(joint)
 
-        # Create the multi-body for the rectangle (placed on the ground)
-        rectangle_id = p.createMultiBody(
-            baseMass=rectangle_mass,
-            baseCollisionShapeIndex=rectangle_shape,
-            basePosition=[0, 0, rectangle_thickness / 2]  # Center at z = thickness/2
-        )
-        self.bodies.append(rectangle_id)
+    def create_robot_default(self):
+        """Define the default kinematic chain."""
+        base = self.add_segment((p.GEOM_BOX, [1.0, 0.3, 0.05]), mass=10.0, position=[0, 0, 0.05])
 
-        # Define wheel parameters (70 cm diameter, axis aligned with width)
-        wheel_diameter = 0.7  # 70 cm
-        wheel_radius = wheel_diameter / 2
-
-        # Define positions of the wheels relative to the center of the rectangle
         wheel_positions = [
-            [-1, rectangle_width / 2, 0],  # A
-            [1, rectangle_width / 2, 0],  # B
-            [-1, -rectangle_width / 2, 0],  # C
-            [1, -rectangle_width / 2, 0]  # D
+            [-1, 0.3, 0],  # A
+            [1, 0.3, 0],  # B
+            [-1, -0.3, 0],  # C
+            [1, -0.3, 0]  # D
         ]
 
-        # Create the wheels and add them to the bodies
+        wheels = []
         for pos in wheel_positions:
-            wheel = self.create_wheel(pos, wheel_radius, rectangle_id)
-            self.bodies.append(wheel)
+            wheel = self.add_segment((p.GEOM_CYLINDER, [0.35, 0.05]), mass=1.0, position=pos)
+            wheels.append(wheel)
 
-    def create_wheel(self, position, radius, parent_id):
-        # Create a wheel (cylinder shape) with the rotation axis aligned with the width of the rectangle (along x-axis)
-        wheel_shape = p.createCollisionShape(p.GEOM_CYLINDER, radius=radius, height=0.1)  # Thin wheels
+        # Attach wheels with fixed joints
+        for wheel, pos in zip(wheels, wheel_positions):
+            self.add_joint(base, wheel, p.JOINT_FIXED, [1, 0, 0], pos, [0, 0, 0])
 
-        # Rotation of 90 degrees around the y-axis to align the wheel's rotation axis with the x-axis
-        orientation = p.getQuaternionFromEuler([0, np.pi / 2, 0])  # Rotate 90 degrees around the y-axis
+    def create_robot_variant_pendulum(self):
+        """Creates a simple swinging pendulum."""
 
-        # Create wheel multi-body
-        wheel_id = p.createMultiBody(
-            baseMass=1.0,  # Assuming 1 kg for each wheel
-            baseCollisionShapeIndex=wheel_shape,
-            basePosition=position,
-            baseOrientation=orientation  # Apply the rotation
-        )
+        # Fixed base (acts as the pivot)
+        base = self.add_segment((p.GEOM_BOX, [0.2, 0.2, 0.2]), mass=0, position=[0, 0, 2.0])
 
-        # Attach the wheel to the rectangle using a fixed joint
-        p.createConstraint(
-            parentBodyUniqueId=parent_id,  # Rectangle body
-            parentLinkIndex=-1,  # Base of the rectangle (no specific link, it's the body itself)
-            childBodyUniqueId=wheel_id,  # Wheel body
-            childLinkIndex=-1,  # Base of the wheel (no specific link)
-            jointType=p.JOINT_FIXED,  # Fixed joint
-            jointAxis=[0, 0, 0],  # No axis for fixed joint
-            parentFramePosition=position,  # Position relative to the parent (rectangle)
-            childFramePosition=[0, 0, 0],  # Position relative to the wheel (origin for fixed joint)
-            parentFrameOrientation=[0, 0, 0, 1],  # No rotation for the parent frame
-            childFrameOrientation=[0, 0, 0, 1]  # No rotation for the wheel frame
-        )
+        # Pendulum arm
+        arm = self.add_segment((p.GEOM_BOX, [0.05, 0.05, 1.0]), mass=2.0, position=[0, 0, 1])
+        p.stepSimulation()
+        # Add a revolute joint (hinge) so the arm swings
+        #self.add_joint(base, arm, p.JOINT_REVOLUTE, [1, 0, 0], [0, 0, 0], [0, 0, 0.5])
 
-        return wheel_id
 
     def create_robot_variant_a(self):
-        # Implement variant "A" if needed (this part is unchanged from the original)
-        pass
+        """Alternative kinematic structure."""
+
+        base = self.add_segment((p.GEOM_BOX, [1.0, 0.3, 0.05]), mass=10.0, position=[0, 0, 1.05])
+
+        arm = self.add_segment((p.GEOM_BOX, [0.05, 0.1, 0.5]), mass=2.0, position=[0.5, 0, 2.15])
+
+        self.add_joint(base, arm, p.JOINT_PRISMATIC, [0, 0, 1], [0, 0, 0], [0, 0, 0])
 
     def update(self):
-        pass  # Apply forces and update logic
+        """Placeholder for physics update logic."""
+        pass
 
     def get_sensor_data(self):
+        """Get the state of all bodies."""
         data = {}
-        for body in self.bodies:
-            pos, orn = p.getBasePositionAndOrientation(body)
-            lin_vel, ang_vel = p.getBaseVelocity(body)
-            data[body] = {
+        for segment in self.segments:
+            pos, orn = p.getBasePositionAndOrientation(segment.body_id)
+            lin_vel, ang_vel = p.getBaseVelocity(segment.body_id)
+            data[segment.body_id] = {
                 "position": pos,
                 "velocity": lin_vel,
                 "orientation": orn,
             }
         return data
 
-    def get_forces(self):
-        return self.forces  # Return current forces applied on bodies
-
     def get_bodies(self):
+        """Return the list of all bodies in the model."""
         return self.bodies
 
 
-def load_model(physics_client, variant="default"):
+def load_model(physics_client, variant="A"):
     return Model(physics_client, variant)
