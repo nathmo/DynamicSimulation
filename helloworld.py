@@ -22,6 +22,98 @@ p.setAdditionalSearchPath(pybullet_data.getDataPath())
 # Simulation control variables
 simulation_running = True
 
+# --- Pendulum Utility Classes ---
+class Segment:
+    def __init__(self, physics_client, shape, mass, position, orientation=[0, 0, 0, 1]):
+        self.physics_client = physics_client
+        geom_type, dims = shape
+        self.body_id = p.createMultiBody(
+            baseMass=mass,
+            baseCollisionShapeIndex=p.createCollisionShape(geom_type, halfExtents=dims),
+            baseVisualShapeIndex=p.createVisualShape(geom_type, halfExtents=dims, rgbaColor=[0.6, 0.2, 0.2, 1]),
+            basePosition=position,
+            baseOrientation=orientation
+        )
+
+class Joint:
+    def __init__(self, physics_client, parent: Segment, child: Segment, joint_type, joint_axis, parent_offset, child_offset):
+        self.physics_client = physics_client
+        p.createConstraint(
+            parent.body_id, -1,
+            child.body_id, -1,
+            jointType=joint_type,
+            jointAxis=joint_axis,
+            parentFramePosition=parent_offset,
+            childFramePosition=child_offset
+        )
+
+class Pendulum:
+    def __init__(self, physics_client):
+        self.physics_client = physics_client
+        self.segments = []
+        self.joints = []
+
+    def add_segment(self, shape, mass, position, orientation=[0, 0, 0, 1]):
+        segment = Segment(self.physics_client, shape, mass, position, orientation)
+        self.segments.append(segment)
+        return segment
+
+    def add_joint(self, parent, child, joint_type, joint_axis, parent_offset, child_offset):
+        joint = Joint(self.physics_client, parent, child, joint_type, joint_axis, parent_offset, child_offset)
+        self.joints.append(joint)
+
+    def create_robot_variant_pendulum(self):
+        """Creates a simple swinging pendulum."""
+        base = self.add_segment((p.GEOM_BOX, [0.2, 0.2, 0.2]), mass=0, position=[0, 0, 2.0])
+        arm = self.add_segment((p.GEOM_BOX, [0.05, 0.05, 1.0]), mass=2.0, position=[0, 0, 1])
+        p.stepSimulation()
+        self.add_joint(base, arm, p.JOINT_REVOLUTE, [1, 0, 0], [0, 0, 0], [0, 0, 0.5])
+
+def create_pendulum_multibody():
+    # Base de pivot fixe
+    base_mass = 0
+    base_half_extents = [0.1, 0.1, 0.1]
+    base_visual = p.createVisualShape(p.GEOM_BOX, halfExtents=base_half_extents, rgbaColor=[1, 0, 0, 1])
+    base_collision = p.createCollisionShape(p.GEOM_BOX, halfExtents=base_half_extents)
+
+    # Pendule (bras)
+    arm_mass = 2.0
+    arm_length = 1.0
+    arm_half_extents = [0.05, 0.05, arm_length / 2]
+    arm_collision = p.createCollisionShape(p.GEOM_BOX, halfExtents=arm_half_extents)
+    arm_visual = p.createVisualShape(p.GEOM_BOX, halfExtents=arm_half_extents, rgbaColor=[0, 0, 1, 1])
+
+    # Position du joint (pivot) : fixée à l'extrémité supérieure du bras
+    joint_pos_base = [0, 0, -base_half_extents[2]]  # pivot au bas de la base
+    joint_pos_link = [0, 0, arm_half_extents[2]]    # pivot à l'extrémité du bras
+
+    # Création du pendule comme multibody
+    pendulum = p.createMultiBody(
+        baseMass=base_mass,
+        baseCollisionShapeIndex=base_collision,
+        baseVisualShapeIndex=base_visual,
+        basePosition=[0, 0, 5.0],
+        baseOrientation=[0, 0, 0, 1],
+        linkMasses=[arm_mass],
+        linkCollisionShapeIndices=[arm_collision],
+        linkVisualShapeIndices=[arm_visual],
+        linkPositions=[joint_pos_base],    # Le joint est positionné par rapport à la base
+        linkOrientations=[[0, 0, 0, 1]],
+        linkInertialFramePositions=[[0, 0, -arm_half_extents[2]]],  # COM au centre du bras
+        linkInertialFrameOrientations=[[0, 0, 0, 1]],
+        linkParentIndices=[0],
+        linkJointTypes=[p.JOINT_REVOLUTE],
+        linkJointAxis=[[1, 0, 0]]  # Axe du joint (rotation autour de l'axe X)
+    )
+
+    # Optionnel : Donne un petit coup au pendule pour le faire démarrer
+    p.resetJointState(pendulum, jointIndex=0, targetValue=0.3)
+
+    return pendulum
+
+
+
+
 def toggle_simulation():
     global simulation_running
     simulation_running = not simulation_running
@@ -74,6 +166,7 @@ def reset_simulation():
     p.resetSimulation()
     p.setGravity(0, 0, -9.81)
     p.setTimeStep(SIMULATION_STEP)
+    p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
     # Recreate terrain
     height_data, terrain_dim = generate_heightfield(TERRAIN_SIZE, TERRAIN_RESOLUTION, HEIGHT_SCALE)
@@ -89,10 +182,13 @@ def reset_simulation():
     p.changeDynamics(terrain, -1, lateralFriction=1.0)
     p.changeVisualShape(terrain, -1, textureUniqueId=texture_id)
 
-    # Recreate wheel
-    return create_wheel([0, 0, WHEEL_RADIUS + 0.1])
+    # Create pendulum
+    pendulum_id = create_pendulum_multibody()
+    return pendulum_id
 
-wheel = reset_simulation()
+
+
+pendulum = reset_simulation()
 
 # --- Camera Control ---
 camera_target = [0, 0, 0]
@@ -132,7 +228,7 @@ while True:
 
     # Reset simulation with 'R'
     if ord('r') in keys and keys[ord('r')] & p.KEY_WAS_TRIGGERED:
-        wheel = reset_simulation()
+        pendulum = reset_simulation()
         camera_position = [0, 0, 2]
 
     # Exit with 'Q'

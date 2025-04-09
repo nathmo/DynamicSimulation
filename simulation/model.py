@@ -58,7 +58,7 @@ class Joint:
         """Display a red arrow showing the joint axis and attachment point."""
         start_pos = np.array(self.parent.position) + np.array(self.parent_offset)
         end_pos = start_pos + 0.2 * np.array(self.joint_axis)  # Scale arrow
-        p.addUserDebugLine(start_pos, end_pos, [1, 0, 0], 2.0)  # Red arrow
+        p.addUserDebugLine(start_pos, end_pos, [1, 0, 0], 5.0)  # Red arrow
 
 
 class Model:
@@ -144,17 +144,21 @@ class Model:
             self.add_joint(base, wheel, p.JOINT_FIXED, [1, 0, 0], pos, [0, 0, 0])
 
     def create_robot_variant_pendulum(self):
-        """Creates a simple swinging pendulum."""
+        """Creates a simple swinging pendulum using createConstraint."""
 
-        # Fixed base (acts as the pivot)
+        # Fixed base (acts as the pivot, no mass)
         base = self.add_segment((p.GEOM_BOX, [0.2, 0.2, 0.2]), mass=0, position=[0, 0, 2.0])
 
-        # Pendulum arm
-        arm = self.add_segment((p.GEOM_BOX, [0.05, 0.05, 1.0]), mass=2.0, position=[0, 0, 1])
-        p.stepSimulation()
-        # Add a revolute joint (hinge) so the arm swings
-        #self.add_joint(base, arm, p.JOINT_REVOLUTE, [1, 0, 0], [0, 0, 0], [0, 0, 0.5])
+        # Pendulum arm (box vertically hanging, so we offset the center of mass)
+        arm = self.add_segment((p.GEOM_BOX, [0.05, 0.05, 1.0]), mass=2.0, position=[0, 0, 0.8], orientation=[0,0,0])
+        p.setCollisionFilterPair(base.body_id, arm.body_id, -1, -1, 0)  # disable collision between base and arm
 
+        # Let the world stabilize before applying constraint
+        p.stepSimulation()
+
+        # Create a point2point constraint (acts like a ball joint)
+        # Pivot is at the bottom of the base and top of the pendulum arm
+        self.add_joint(base, arm, p.JOINT_REVOLUTE, [1, 0, 0], [0, 0, -0.2], [0, 0, 1])
 
     def create_robot_variant_a(self):
         """Alternative kinematic structure."""

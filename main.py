@@ -15,7 +15,7 @@ def main():
     commands = CommandHandler(simulator)
     simulator.register_command_handler(commands)
 
-    simulator.run(model)
+    simulator.run(model, record=False)
     app.exec_()  # Keep PyQt event loop running
 
 if __name__ == "__main__":
