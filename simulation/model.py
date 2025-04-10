@@ -108,7 +108,7 @@ class Model:
 
     def load_surface(self):
         """Load the ground surface."""
-        plane_id = p.loadURDF("output_mesh/plane.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
+        plane_id = p.loadURDF("urdf/plane.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
         self.bodies.append(plane_id)
 
     def add_segment(self, shape, mass, position, orientation=[0, 0, 0, 1]):
