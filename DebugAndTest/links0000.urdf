@@ -1,0 +1,40 @@
+<?xml version="0.0"?> 
+<robot name="0000"> 
+  <link name="None"> 
+    <visual> 
+      <geometry> 
+        <box size="0.1 0.1 0.8"/>
+      </geometry> 
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 -0.5"/>
+    </visual> 
+    <inertial> 
+      <mass value="1.0"/> 
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 -1.0"/>
+      <inertia ixx="0000.0" iyy="0000.0" izz="0000.0" iyz="0.0" ixz="0.0" ixy="0.0"/>
+    </inertial> 
+  </link> 
+
+  <link name="1"> 
+    <visual> 
+      <geometry> 
+        <box size="0.1 0.1 0.8"/>
+      </geometry> 
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 -0.5"/>
+    </visual> 
+    <inertial> 
+      <mass value="1.0"/> 
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 -1.0"/> 
+      <inertia ixx="0000.0" iyy="0000.0" izz="0000.0" iyz="0.0" ixz="0.0" ixy="0.0"/>
+    </inertial> 
+  </link> 
+
+
+  <joint name="1_None" type="continuous"> 
+    <parent link="None"/> 
+    <child link="1"/> 
+    <axis xyz="0.0 1.0 0.0"/> 
+    <dynamics damping="0.0" friction="0.0"/> 
+    <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 -1.0"/> 
+  </joint> 
+
+</robot> 

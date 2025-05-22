@@ -52,3 +52,4 @@ while True:
     time.sleep(1./240.)
 
 # Conclusion, JOINT_REVOLUTE DO NOT WORK with create constraint
+# This script will crash

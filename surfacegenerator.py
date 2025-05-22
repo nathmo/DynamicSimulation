@@ -60,7 +60,7 @@ if __name__ == "__main__":
     x_range = (-20, 20) #(-10, 50)
     y_range = (-10, 50) #(-20, 20)
     resolution = 500
-    mesh_dir = Path("output_mesh")
+    mesh_dir = Path("urdf")
     mesh_dir.mkdir(exist_ok=True)
 
     stl_filename = mesh_dir / "plane_mesh.stl"
