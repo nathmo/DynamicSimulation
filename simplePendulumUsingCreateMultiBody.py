@@ -35,7 +35,7 @@ pendulum_id = p.createMultiBody(
     baseInertialFramePosition=[0, 0, 0],  # Center of mass of the base
     baseInertialFrameOrientation=[0, 0, 0, 1],  # Inertial orientation of the base
 
-    linkMasses=[1.0, 10.0],  # Mass of the pivot and second arm
+    linkMasses=[0.0, 10.0],  # Mass of the pivot and second arm
     linkCollisionShapeIndices=[pivot_col, second_arm_col],  # Collision shape index for the arm
     linkVisualShapeIndices=[pivot_vis, second_arm_vis],  # Visual shape index for the arm
     linkPositions=[[0.2, 0, 0], [0, 0.6, 0]],  # Position of the arm relative to the base
@@ -46,6 +46,11 @@ pendulum_id = p.createMultiBody(
     linkJointTypes=[p.JOINT_REVOLUTE, p.JOINT_FIXED],  # Both joints should be revolute
     linkJointAxis=[[1, 0, 0], [0, 0, 1]],  # The joint axis is along the X-axis of the parent (base)
 )
+
+num_joints = p.getNumJoints(pendulum_id)
+for j in range(num_joints):
+    p.changeDynamics(pendulum_id, j, linearDamping=0.000001, angularDamping=0.000001, jointDamping=0.000001)
+
 
 # Simulate
 while True:
