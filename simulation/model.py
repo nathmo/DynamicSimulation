@@ -71,6 +71,8 @@ class Model:
         self.joints = []
         self.forces = {body: [0, 0, 0] for body in self.bodies}
         self.variant = variant
+        self.joint_name_to_index = {}
+        self.link_name_to_index = {}
         self.build_robot()
 
     def get_forces(self):
@@ -151,13 +153,48 @@ class Model:
         self.bodies.append(pendulum)
 
     def create_robot_variant_a(self):
-        """Alternative kinematic structure."""
+        """Loads robot, maps joints/links, disables motors, and resets joint states."""
+        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
 
-        base = self.add_segment((p.GEOM_BOX, [1.0, 0.3, 0.05]), mass=10.0, position=[0, 0, 1.05])
+        num_joints = p.getNumJoints(robot)
+        for joint_index in range(num_joints):
+            info = p.getJointInfo(robot, joint_index)
+            joint_name = info[1].decode("utf-8")
+            link_name = info[12].decode("utf-8")
+            joint_type = info[2]
 
-        arm = self.add_segment((p.GEOM_BOX, [0.05, 0.1, 0.5]), mass=2.0, position=[0.5, 0, 2.15])
+            self.joint_name_to_index[joint_name] = joint_index
+            self.link_name_to_index[link_name] = joint_index
 
-        self.add_joint(base, arm, p.JOINT_PRISMATIC, [0, 0, 1], [0, 0, 0], [0, 0, 0])
+            # Disable motor
+            p.setJointMotorControl2(
+                bodyIndex=robot,
+                jointIndex=joint_index,
+                controlMode=p.VELOCITY_CONTROL,
+                force=0
+            )
+
+            # Reset joint to 0 radians by default (you can override below)
+            if joint_type in [p.JOINT_REVOLUTE]:
+                p.resetJointState(robot, joint_index, 0.0)
+        self.bodies.append(robot)
+
+    def set_joint_position(self, joint_name, target_position):
+        """Sets target joint angle (radians) for a named joint."""
+        if joint_name not in self.joint_name_to_index:
+            raise ValueError(f"Joint '{joint_name}' not found in robot.")
+        joint_index = self.joint_name_to_index[joint_name]
+        p.resetJointState(self.robot_id, joint_index, target_position)
+
+    def print_joint_mapping(self):
+        print("Joint Name → Index mapping:")
+        for name, idx in self.joint_name_to_index.items():
+            print(f"  {name} → {idx}")
+
+    def print_link_mapping(self):
+        print("Link Name → Index mapping:")
+        for name, idx in self.link_name_to_index.items():
+            print(f"  {name} → {idx}")
 
     def update(self):
         """Placeholder for physics update logic."""
