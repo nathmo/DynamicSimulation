@@ -9,9 +9,9 @@ def main():
     simulator = Simulator(time_step=1/240)
     model = load_model(simulator.physics_client, variant="PENDULUM")
     bodies = model.get_bodies()  # Get all bodies from the model
-    plotter = Plotter(bodies)
+    #plotter = Plotter(bodies)
 
-    simulator.register_plotter(plotter)
+    #simulator.register_plotter(plotter)
     commands = CommandHandler(simulator)
     simulator.register_command_handler(commands)
 

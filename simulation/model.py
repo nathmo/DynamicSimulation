@@ -145,20 +145,10 @@ class Model:
 
     def create_robot_variant_pendulum(self):
         """Creates a simple swinging pendulum using createConstraint."""
-
-        # Fixed base (acts as the pivot, no mass)
-        base = self.add_segment((p.GEOM_BOX, [0.2, 0.2, 0.2]), mass=0, position=[0, 0, 2.0])
-
-        # Pendulum arm (box vertically hanging, so we offset the center of mass)
-        arm = self.add_segment((p.GEOM_BOX, [0.05, 0.05, 1.0]), mass=2.0, position=[0, 0, 0.8], orientation=[0,0,0])
-        p.setCollisionFilterPair(base.body_id, arm.body_id, -1, -1, 0)  # disable collision between base and arm
-
-        # Let the world stabilize before applying constraint
-        p.stepSimulation()
-
-        # Create a point2point constraint (acts like a ball joint)
-        # Pivot is at the bottom of the base and top of the pendulum arm
-        self.add_joint(base, arm, p.JOINT_REVOLUTE, [1, 0, 0], [0, 0, -0.2], [0, 0, 1])
+        pendulum = p.loadURDF("urdf/pendulum.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
+        p.setJointMotorControl2(bodyIndex=pendulum, jointIndex=0, targetVelocity=0, controlMode=p.VELOCITY_CONTROL, force=0)
+        p.resetJointState(pendulum, 0, +np.pi / 2, 0.0)
+        self.bodies.append(pendulum)
 
     def create_robot_variant_a(self):
         """Alternative kinematic structure."""
