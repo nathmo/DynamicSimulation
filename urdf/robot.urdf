@@ -15,6 +15,10 @@
         <color rgba="0.04231141061442144 0.031896033067374104 0.010960094003125918 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="2.5 0.75 0.1"/></geometry>
+    </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -37,6 +41,12 @@
         <color rgba="0.08437621153575764 0.2663556047920505 0.7230551289161951 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0.5 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="1 0.1 0.1" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0.5 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -59,6 +69,12 @@
         <color rgba="0.4178850708380236 0.9215818562755338 0.1844749944900301 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.5 0.1 0.1" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -82,6 +98,12 @@
         <color rgba="0.0009105809505882353 0.174647403645279 0.7454042095350284 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.570796326794897 0 0" />
+      <geometry>
+        <cylinder radius="0.4" length="0.05" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -104,6 +126,12 @@
         <color rgba="0.08437621153575764 0.2663556047920505 0.7230551289161951 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0.5 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="1 0.1 0.1" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0.5 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -126,6 +154,12 @@
         <color rgba="0.4178850708380236 0.9215818562755338 0.1844749944900301 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.5 0.1 0.1" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -149,6 +183,12 @@
         <color rgba="0.0009105809505882353 0.174647403645279 0.7454042095350284 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.570796326794897 0 0" />
+      <geometry>
+        <cylinder radius="0.4" length="0.05" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -171,6 +211,12 @@
         <color rgba="0.08437621153575764 0.2663556047920505 0.7230551289161951 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="-0.5 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="1 0.1 0.1" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="-0.5 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -194,6 +240,12 @@
         <color rgba="0.4178850708380236 0.9215818562755338 0.1844749944900301 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.5 0.1 0.1" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -217,6 +269,12 @@
         <color rgba="0.0009105809505882353 0.174647403645279 0.7454042095350284 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.570796326794897 0 0" />
+      <geometry>
+        <cylinder radius="0.4" length="0.05" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -239,6 +297,12 @@
         <color rgba="0.08437621153575764 0.2663556047920505 0.7230551289161951 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="-0.5 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="1 0.1 0.1" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="-0.5 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -261,6 +325,12 @@
         <color rgba="0.4178850708380236 0.9215818562755338 0.1844749944900301 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.5 0.1 0.1" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
@@ -284,6 +354,12 @@
         <color rgba="0.0009105809505882353 0.174647403645279 0.7454042095350284 1" />
       </material>
     </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.570796326794897 0 0" />
+      <geometry>
+        <cylinder radius="0.4" length="0.05" />
+      </geometry>
+    </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
