@@ -17,7 +17,7 @@ class Plotter(QMainWindow):
         self.data = {body: {"time": [], "position": [], "velocity": [], "acceleration": [], "force": []} for body in
                      bodies}
 
-        self.fig, self.axes = plt.subplots(len(bodies), 4, figsize=(12, 3 * len(bodies)))
+        self.fig, self.axes = plt.subplots(len(bodies), 4, figsize=(12, 3 * len(bodies)), squeeze=False)
         self.canvas = FigureCanvas(self.fig)
         self.lines = {}
 

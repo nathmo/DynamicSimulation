@@ -1,65 +1,7 @@
 import pybullet as p
 import numpy as np
-
-
-class Segment:
-    """Represents a segment (rigid body) in the kinematic chain."""
-
-    def __init__(self, physics_client, shape, mass, position, orientation=[0, 0, 0, 1]):
-        self.physics_client = physics_client
-        self.shape = shape
-        self.mass = mass
-        self.position = position
-        self.orientation = orientation
-        self.body_id = self.create_body()
-
-    def create_body(self):
-        """Create and return a rigid body in PyBullet."""
-        collision_shape = p.createCollisionShape(self.shape[0], halfExtents=self.shape[1])
-        body_id = p.createMultiBody(
-            baseMass=self.mass,
-            baseCollisionShapeIndex=collision_shape,
-            basePosition=self.position,
-            baseOrientation=self.orientation
-        )
-        return body_id
-
-
-class Joint:
-    """Represents a joint connecting two segments."""
-
-    def __init__(self, physics_client, parent, child, joint_type, joint_axis, parent_offset, child_offset):
-        self.physics_client = physics_client
-        self.parent = parent
-        self.child = child
-        self.joint_type = joint_type
-        self.joint_axis = joint_axis
-        self.parent_offset = parent_offset
-        self.child_offset = child_offset
-        self.create_joint()
-        self.visualize_joint()
-
-    def create_joint(self):
-        """Create a joint between two segments."""
-        p.createConstraint(
-            parentBodyUniqueId=self.parent.body_id,
-            parentLinkIndex=-1,
-            childBodyUniqueId=self.child.body_id,
-            childLinkIndex=-1,
-            jointType=self.joint_type,
-            jointAxis=self.joint_axis,
-            parentFramePosition=self.parent_offset,
-            childFramePosition=self.child_offset,
-            parentFrameOrientation=[0, 0, 0, 1],
-            childFrameOrientation=[0, 0, 0, 1]
-        )
-
-    def visualize_joint(self):
-        """Display a red arrow showing the joint axis and attachment point."""
-        start_pos = np.array(self.parent.position) + np.array(self.parent_offset)
-        end_pos = start_pos + 0.2 * np.array(self.joint_axis)  # Scale arrow
-        p.addUserDebugLine(start_pos, end_pos, [1, 0, 0], 5.0)  # Red arrow
-
+import math
+from math import pi
 
 class Model:
     """Manages the full kinematic chain, including segments and joints."""
@@ -100,50 +42,13 @@ class Model:
         """Select the appropriate kinematic variant."""
         #self.load_surface()
         if self.variant == "default":
-            self.create_robot_default()
+            self.create_robot_variant_pendulum()
         elif self.variant == "PENDULUM":
             self.create_robot_variant_pendulum()
         elif self.variant == "A":
             self.create_robot_variant_a()
         else:
             raise ValueError(f"Unknown robot variant: {self.variant}")
-
-    def load_surface(self):
-        """Load the ground surface."""
-        plane_id = p.loadURDF("urdf/plane.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
-        self.bodies.append(plane_id)
-
-    def add_segment(self, shape, mass, position, orientation=[0, 0, 0, 1]):
-        """Add a new segment to the model."""
-        segment = Segment(self.physics_client, shape, mass, position, orientation)
-        self.segments.append(segment)
-        self.bodies.append(segment.body_id)
-        return segment
-
-    def add_joint(self, parent, child, joint_type, joint_axis, parent_offset, child_offset):
-        """Add a joint connecting two segments."""
-        joint = Joint(self.physics_client, parent, child, joint_type, joint_axis, parent_offset, child_offset)
-        self.joints.append(joint)
-
-    def create_robot_default(self):
-        """Define the default kinematic chain."""
-        base = self.add_segment((p.GEOM_BOX, [1.0, 0.3, 0.05]), mass=10.0, position=[0, 0, 0.05])
-
-        wheel_positions = [
-            [-1, 0.3, 0],  # A
-            [1, 0.3, 0],  # B
-            [-1, -0.3, 0],  # C
-            [1, -0.3, 0]  # D
-        ]
-
-        wheels = []
-        for pos in wheel_positions:
-            wheel = self.add_segment((p.GEOM_CYLINDER, [0.35, 0.05]), mass=1.0, position=pos)
-            wheels.append(wheel)
-
-        # Attach wheels with fixed joints
-        for wheel, pos in zip(wheels, wheel_positions):
-            self.add_joint(base, wheel, p.JOINT_FIXED, [1, 0, 0], pos, [0, 0, 0])
 
     def create_robot_variant_pendulum(self):
         """Creates a simple swinging pendulum using createConstraint."""
@@ -153,8 +58,9 @@ class Model:
         self.bodies.append(pendulum)
 
     def create_robot_variant_a(self):
+        plane = p.loadURDF("urdf/plane.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
         """Loads robot, maps joints/links, disables motors, and resets joint states."""
-        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
+        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 2], baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]), useFixedBase=False)
 
         num_joints = p.getNumJoints(robot)
         for joint_index in range(num_joints):
@@ -165,7 +71,7 @@ class Model:
 
             self.joint_name_to_index[joint_name] = joint_index
             self.link_name_to_index[link_name] = joint_index
-
+            print(joint_index)
             # Disable motor
             p.setJointMotorControl2(
                 bodyIndex=robot,
@@ -178,6 +84,27 @@ class Model:
             if joint_type in [p.JOINT_REVOLUTE]:
                 p.resetJointState(robot, joint_index, 0.0)
         self.bodies.append(robot)
+        self.bodies.append(plane)
+        #print(self.joint_name_to_index) # {'base_joint': 0, 'base_link_to_hipFL': 1, 'hipFL_to_fourcheFL': 2, 'fourcheFL_to_wheelFL': 3, 'base_link_to_hipFR': 4, 'hipFR_to_fourcheFR': 5, 'fourcheFR_to_wheelFR': 6, 'base_link_to_hipBL': 7, 'hipBL_to_fourcheBL': 8, 'fourcheBL_to_wheelBL': 9, 'base_link_to_hipBR': 10, 'hipBR_to_fourcheBR': 11, 'fourcheBR_to_wheelBR': 12}
+        #print(self.link_name_to_index) # {'base_link': 0, 'hipFL': 1, 'fourcheFL': 2, 'wheelFL': 3, 'hipFR': 4, 'fourcheFR': 5, 'wheelFR': 6, 'hipBL': 7, 'fourcheBL': 8, 'wheelBL': 9, 'hipBR': 10, 'fourcheBR': 11, 'wheelBR': 12}
+
+    def apply_spring_damper_torque(self, robot, joint_name, k, c, rest_angle):
+        # angle in radian
+        # k is newton meter per radian
+        # c is in radians per seconds
+        joint_index = self.joint_name_to_index[joint_name]
+        state = p.getJointState(robot, joint_index)
+        angle = state[0]
+        velocity = state[1]
+
+        torque = -k * (angle - rest_angle) - c * velocity
+
+        p.setJointMotorControl2(
+            bodyIndex=robot,
+            jointIndex=joint_index,
+            controlMode=p.TORQUE_CONTROL,
+            force=torque
+        )
 
     def set_joint_position(self, joint_name, target_position):
         """Sets target joint angle (radians) for a named joint."""
@@ -198,19 +125,79 @@ class Model:
 
     def update(self):
         """Placeholder for physics update logic."""
+        k = 10.0  # Nm/rad
+        c = 1.0  # Nms/rad
+        rest_angle = 0.0  # radians
+
+        spring_joints = [
+            'fourcheFL_to_wheelFL',
+            'fourcheFR_to_wheelFR',
+            'fourcheBL_to_wheelBL',
+            'fourcheBR_to_wheelBR',
+            'base_link_to_hipFL',
+            'base_link_to_hipFR',
+            'base_link_to_hipBL',
+            'base_link_to_hipBR',
+        ]
+
+        spring_k = {
+            'fourcheFL_to_wheelFL': 2000.0,
+            'fourcheFR_to_wheelFR': 2000.0,
+            'fourcheBL_to_wheelBL': 2000.0,
+            'fourcheBR_to_wheelBR': 2000.0,
+            'base_link_to_hipFL': 1000.0,
+            'base_link_to_hipFR': 1000.0,
+            'base_link_to_hipBL': 1000.0,
+            'base_link_to_hipBR': 1000.0,
+        }
+
+        spring_c = {
+            'fourcheFL_to_wheelFL': 100.0,
+            'fourcheFR_to_wheelFR': 100.0,
+            'fourcheBL_to_wheelBL': 100.0,
+            'fourcheBR_to_wheelBR': 100.0,
+            'base_link_to_hipFL': 10.0,
+            'base_link_to_hipFR': 10.0,
+            'base_link_to_hipBL': 10.0,
+            'base_link_to_hipBR': 10.0,
+        }
+
+        rest_angle = {
+            'fourcheFL_to_wheelFL': 0,
+            'fourcheFR_to_wheelFR': 0,
+            'fourcheBL_to_wheelBL': 0,
+            'fourcheBR_to_wheelBR': 0,
+            'base_link_to_hipFL': -pi/4,
+            'base_link_to_hipFR': -pi/4,
+            'base_link_to_hipBL': pi/4,
+            'base_link_to_hipBR': pi/4,
+        }
+
+        for joint in spring_joints:
+            self.apply_spring_damper_torque(self.bodies[0], joint, spring_k[joint], spring_c[joint], rest_angle[joint])
         pass
 
     def get_sensor_data(self):
-        """Get the state of all bodies."""
+        """Get the state of all links in the URDF-loaded robot."""
         data = {}
-        for segment in self.segments:
-            pos, orn = p.getBasePositionAndOrientation(segment.body_id)
-            lin_vel, ang_vel = p.getBaseVelocity(segment.body_id)
-            data[segment.body_id] = {
+        robot_id = self.bodies[0]  # Assuming first entry is the robot
+        num_joints = p.getNumJoints(robot_id)
+
+        for link_index in range(-1, num_joints):  # -1 is the base
+            if link_index == -1:
+                pos, orn = p.getBasePositionAndOrientation(robot_id)
+                lin_vel, ang_vel = p.getBaseVelocity(robot_id)
+            else:
+                state = p.getLinkState(robot_id, link_index, computeLinkVelocity=1)
+                pos, orn = state[0], state[1]
+                lin_vel, ang_vel = state[6], state[7]
+
+            data[link_index] = {
                 "position": pos,
                 "velocity": lin_vel,
                 "orientation": orn,
             }
+
         return data
 
     def get_bodies(self):
