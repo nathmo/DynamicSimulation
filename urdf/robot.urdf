@@ -12,7 +12,7 @@
         <box size="2.5 0.75 0.1" />
       </geometry>
       <material name="base_link-material">
-        <color rgba="0.04231141061442144 0.031896033067374104 0.010960094003125918 1" />
+        <color rgba="0.05 0.05 0.05 1" />
       </material>
     </visual>
     <collision>
@@ -21,15 +21,15 @@
     </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="1" />
-      <inertia ixx="0.16666666666666666" ixy="0" ixz="0" iyy="0.16666666666666666" iyz="0" izz="0.16666666666666666" />
+      <mass value="100" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="base_link_to_hipFL" type="revolute">
     <parent link="base_link" />
     <child link="hipFL" />
     <origin xyz="1 0.45 0" rpy="0 0 0" />
-    <axis xyz="-0.011994876231113505 -0.9998443265953507 0.012940074160918299"/>
+    <axis xyz="0 -1 0"/>
     <limit effort="1000.0" lower="-1.5" upper="0" velocity="0.5"/>  </joint>
   <link name="hipFL">
     <visual>
@@ -38,7 +38,7 @@
         <box size="1 0.1 0.1" />
       </geometry>
       <material name="hipFL-material">
-        <color rgba="0.08437621153575764 0.2663556047920505 0.7230551289161951 1" />
+        <color rgba="0.1 0.3 0.7 1" />
       </material>
     </visual>
     <collision>
@@ -50,14 +50,14 @@
     <inertial>
       <origin xyz="0.5 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.16666666666666666" ixy="0" ixz="0" iyy="0.16666666666666666" iyz="0" izz="0.16666666666666666" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="hipFL_to_fourcheFL" type="revolute">
     <parent link="hipFL" />
     <child link="fourcheFL" />
     <origin xyz="1.25 0 0" rpy="0 0 0" />
-    <axis xyz="-0.9999802718231151 -0.0029739561465120046 0.005532770500188856"/>
+    <axis xyz="-1 0 0"/>
     <limit effort="1000.0" lower="-1" upper="1" velocity="0.5"/>  </joint>
   <link name="fourcheFL">
     <visual>
@@ -66,7 +66,7 @@
         <box size="0.5 0.1 0.1" />
       </geometry>
       <material name="fourcheFL-material">
-        <color rgba="0.4178850708380236 0.9215818562755338 0.1844749944900301 1" />
+        <color rgba="0.4 1 0.2 1" />
       </material>
     </visual>
     <collision>
@@ -78,14 +78,14 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.16666666666666666" ixy="0" ixz="0" iyy="0.16666666666666666" iyz="0" izz="0.16666666666666666" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="fourcheFL_to_wheelFL" type="revolute">
     <parent link="fourcheFL" />
     <child link="wheelFL" />
     <origin xyz="0.25 0.075 0" rpy="0 0 0" />
-    <axis xyz="0 0.9999984826271444 0.001742051494347363"/>
+    <axis xyz="0 1 0"/>
     <limit effort="10.0" velocity="10.0"/>
   </joint>
   <link name="wheelFL">
@@ -95,7 +95,7 @@
         <cylinder radius="0.4" length="0.05" />
       </geometry>
       <material name="wheelFL-material">
-        <color rgba="0.0009105809505882353 0.174647403645279 0.7454042095350284 1" />
+        <color rgba="0 0.2 0.7 1" />
       </material>
     </visual>
     <collision>
@@ -107,14 +107,14 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.3333333333333333" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.3333333333333333" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="base_link_to_hipFR" type="revolute">
     <parent link="base_link" />
     <child link="hipFR" />
     <origin xyz="1 -0.45 0" rpy="0 0 0" />
-    <axis xyz="-0.01199487623111348 -0.9998443265953507 0.012940074160918302"/>
+    <axis xyz="0 -1 0"/>
     <limit effort="1000.0" lower="-1.5" upper="0" velocity="0.5"/>  </joint>
   <link name="hipFR">
     <visual>
@@ -123,7 +123,7 @@
         <box size="1 0.1 0.1" />
       </geometry>
       <material name="hipFR-material">
-        <color rgba="0.08437621153575764 0.2663556047920505 0.7230551289161951 1" />
+        <color rgba="0 0.2 0.7 1" />
       </material>
     </visual>
     <collision>
@@ -135,14 +135,14 @@
     <inertial>
       <origin xyz="0.5 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.16666666666666666" ixy="0" ixz="0" iyy="0.16666666666666666" iyz="0" izz="0.16666666666666666" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="hipFR_to_fourcheFR" type="revolute">
     <parent link="hipFR" />
     <child link="fourcheFR" />
     <origin xyz="1.25 0 0" rpy="0 0 0" />
-    <axis xyz="-0.999980271823115 -0.0029739561465167465 0.005532770500197626"/>
+    <axis xyz="-1 0 0"/>
     <limit effort="1000.0" lower="-1" upper="1" velocity="0.5"/>  </joint>
   <link name="fourcheFR">
     <visual>
@@ -151,7 +151,7 @@
         <box size="0.5 0.1 0.1" />
       </geometry>
       <material name="fourcheFR-material">
-        <color rgba="0.4178850708380236 0.9215818562755338 0.1844749944900301 1" />
+        <color rgba="0.4 1 0.2 1" />
       </material>
     </visual>
     <collision>
@@ -163,14 +163,14 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.16666666666666666" ixy="0" ixz="0" iyy="0.16666666666666666" iyz="0" izz="0.16666666666666666" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="fourcheFR_to_wheelFR" type="revolute">
     <parent link="fourcheFR" />
     <child link="wheelFR" />
     <origin xyz="0.25 -0.07 0" rpy="0 0 0" />
-    <axis xyz="0 0.9999984826271444 0.0017420514943473635"/>
+    <axis xyz="0 1 0"/>
     <limit effort="10.0" velocity="10.0"/>
   </joint>
   <link name="wheelFR">
@@ -180,7 +180,7 @@
         <cylinder radius="0.4" length="0.05" />
       </geometry>
       <material name="wheelFR-material">
-        <color rgba="0.0009105809505882353 0.174647403645279 0.7454042095350284 1" />
+        <color rgba="0 0.2 0.7 1" />
       </material>
     </visual>
     <collision>
@@ -192,14 +192,14 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.3333333333333333" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.3333333333333333" />
+      <inertia ixx="0.3" ixy="0" ixz="0" iyy="0.3" iyz="0" izz="0.3" />
     </inertial>
   </link>
   <joint name="base_link_to_hipBL" type="revolute">
     <parent link="base_link" />
     <child link="hipBL" />
     <origin xyz="-1 0.45 0" rpy="0 0 0" />
-    <axis xyz="-0.01199487623111348 -0.9998443265953507 0.012940074160918302"/>
+    <axis xyz="0 -1 0"/>
     <limit effort="1000.0" lower="0" upper="1.5" velocity="0.5"/>  </joint>
   <link name="hipBL">
     <visual>
@@ -208,7 +208,7 @@
         <box size="1 0.1 0.1" />
       </geometry>
       <material name="hipBL-material">
-        <color rgba="0.08437621153575764 0.2663556047920505 0.7230551289161951 1" />
+        <color rgba="0 0.2 0.7 1" />
       </material>
     </visual>
     <collision>
@@ -220,14 +220,14 @@
     <inertial>
       <origin xyz="-0.5 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.16666666666666666" ixy="0" ixz="0" iyy="0.16666666666666666" iyz="0" izz="0.16666666666666666" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="hipBL_to_fourcheBL" type="revolute">
     <parent link="hipBL" />
     <child link="fourcheBL" />
     <origin xyz="-1.25 0 0" rpy="0 0 0" />
-    <axis xyz="-0.999980271823115 -0.0029739561465167465 0.005532770500197626"/>
+    <axis xyz="-1 0 0"/>
     <limit effort="1000.0" lower="-1" upper="1" velocity="0.5"/>
   </joint>
   <link name="fourcheBL">
@@ -237,7 +237,7 @@
         <box size="0.5 0.1 0.1" />
       </geometry>
       <material name="fourcheBL-material">
-        <color rgba="0.4178850708380236 0.9215818562755338 0.1844749944900301 1" />
+        <color rgba="0.4 1 0.2 1" />
       </material>
     </visual>
     <collision>
@@ -249,14 +249,14 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.16666666666666666" ixy="0" ixz="0" iyy="0.16666666666666666" iyz="0" izz="0.16666666666666666" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="fourcheBL_to_wheelBL" type="revolute">
     <parent link="fourcheBL" />
     <child link="wheelBL" />
     <origin xyz="-0.25 0.075 0" rpy="0 0 0" />
-    <axis xyz="0 0.9999984826271444 0.0017420514943473635"/>
+    <axis xyz="0 1 0"/>
     <limit effort="10.0" velocity="10.0"/>
   </joint>
   <link name="wheelBL">
@@ -266,7 +266,7 @@
         <cylinder radius="0.4" length="0.05" />
       </geometry>
       <material name="wheelBL-material">
-        <color rgba="0.0009105809505882353 0.174647403645279 0.7454042095350284 1" />
+        <color rgba="0 0.2 0.7 1" />
       </material>
     </visual>
     <collision>
@@ -278,14 +278,14 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.3333333333333333" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.3333333333333333" />
+      <inertia ixx="0.3" ixy="0" ixz="0" iyy="0.3" iyz="0" izz="0.3" />
     </inertial>
   </link>
   <joint name="base_link_to_hipBR" type="revolute">
     <parent link="base_link" />
     <child link="hipBR" />
     <origin xyz="-1 -0.45 0" rpy="0 0 0" />
-    <axis xyz="-0.01199487623111348 -0.9998443265953507 0.012940074160918302"/>
+    <axis xyz="0 -1 0"/>
     <limit effort="1000.0" lower="0" upper="1.5" velocity="0.5"/>  </joint>
   <link name="hipBR">
     <visual>
@@ -294,7 +294,7 @@
         <box size="1 0.1 0.1" />
       </geometry>
       <material name="hipBR-material">
-        <color rgba="0.08437621153575764 0.2663556047920505 0.7230551289161951 1" />
+        <color rgba="0 0.2 0.7 1" />
       </material>
     </visual>
     <collision>
@@ -306,14 +306,14 @@
     <inertial>
       <origin xyz="-0.5 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.16666666666666666" ixy="0" ixz="0" iyy="0.16666666666666666" iyz="0" izz="0.16666666666666666" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="hipBR_to_fourcheBR" type="revolute">
     <parent link="hipBR" />
     <child link="fourcheBR" />
     <origin xyz="-1.25 0 0" rpy="0 0 0" />
-    <axis xyz="-0.999980271823115 -0.0029739561465167465 0.005532770500197626"/>
+    <axis xyz="-1 0 0"/>
     <limit effort="1000.0" lower="-1" upper="1" velocity="0.5"/>  </joint>
   <link name="fourcheBR">
     <visual>
@@ -322,7 +322,7 @@
         <box size="0.5 0.1 0.1" />
       </geometry>
       <material name="fourcheBR-material">
-        <color rgba="0.4178850708380236 0.9215818562755338 0.1844749944900301 1" />
+        <color rgba="0.4 0.9 0.2 1" />
       </material>
     </visual>
     <collision>
@@ -334,14 +334,14 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.16666666666666666" ixy="0" ixz="0" iyy="0.16666666666666666" iyz="0" izz="0.16666666666666666" />
+      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.1" iyz="0" izz="0.1" />
     </inertial>
   </link>
   <joint name="fourcheBR_to_wheelBR" type="revolute">
     <parent link="fourcheBR" />
     <child link="wheelBR" />
     <origin xyz="-0.25 -0.07 0" rpy="0 0 0" />
-    <axis xyz="0 0.9999984826271444 0.0017420514943473635"/>
+    <axis xyz="0 1 0"/>
     <limit effort="10.0" velocity="10.0"/>
   </joint>
   <link name="wheelBR">
@@ -351,7 +351,7 @@
         <cylinder radius="0.4" length="0.05" />
       </geometry>
       <material name="wheelBR-material">
-        <color rgba="0.0009105809505882353 0.174647403645279 0.7454042095350284 1" />
+        <color rgba="0 0.2 0.7 1" />
       </material>
     </visual>
     <collision>
@@ -363,7 +363,7 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="1" />
-      <inertia ixx="0.3333333333333333" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.3333333333333333" />
+      <inertia ixx="0.3" ixy="0" ixz="0" iyy="0.3" iyz="0" izz="0.3" />
     </inertial>
   </link>
 </robot>
