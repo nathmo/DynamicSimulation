@@ -48,7 +48,7 @@ class Simulator:
             print("Stopped recording")
             self.video_log_id = None
 
-    def run(self, model, record=True):
+    def run(self, model, record=True, plot=True):
         if record:
             self.start_recording()
 
@@ -62,7 +62,7 @@ class Simulator:
                 model.update()
                 p.stepSimulation()
 
-                if self.plotter:
+                if (self.plotter and plot):
                     self.plotter.update_sensor_data(model.get_sensor_data(), self.time_step)
 
                 elapsed = time.perf_counter() - start_time
@@ -74,6 +74,3 @@ class Simulator:
 
         if record:
             self.stop_recording()
-
-        if self.plotter:
-            self.plotter.save_plots()

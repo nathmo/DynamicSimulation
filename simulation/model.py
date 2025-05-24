@@ -130,39 +130,23 @@ class RobotScenario:
         torque = -k * (angle - rest_angle) - c * velocity
         p.setJointMotorControl2(robot, joint_index, p.TORQUE_CONTROL, force=torque)
 
-    def apply_speed_PD(self, robot, joint_index, target_speed, Kp, Kd, max_torque):
+    def apply_speed_velocity_control(self, robot, joint_index, target_speed, max_torque):
         """
-        Applies a PD-based speed controller to a revolute joint (wheel).
+        Applies velocity control to a revolute joint (wheel).
 
         Args:
             robot (int): The PyBullet body unique ID.
             joint_index (int): The index of the joint to control.
             target_speed (float): Desired angular velocity (rad/s).
-            Kp (float): Proportional gain.
-            Kd (float): Derivative gain.
             max_torque (float): Maximum allowable torque (Nm).
         """
-        # Read current joint state (position, velocity, reactionForces, appliedTorque)
-        _, current_velocity, _, _ = p.getJointState(robot, joint_index)
-
-        # Compute velocity error
-        vel_error = target_speed - current_velocity
-
-        # PD control law (torque = Kp * error - Kd * velocity)
-        torque = Kp * vel_error - Kd * current_velocity
-
-        # Clamp torque to ±max_torque
-        if torque > max_torque:
-            torque = max_torque
-        elif torque < -max_torque:
-            torque = -max_torque
-
-        # Apply the computed torque in TORQUE_CONTROL mode
+        # Let PyBullet handle the velocity control
         p.setJointMotorControl2(
             bodyIndex=robot,
             jointIndex=joint_index,
-            controlMode=p.TORQUE_CONTROL,
-            force=torque
+            controlMode=p.VELOCITY_CONTROL,
+            targetVelocity=target_speed,
+            force=max_torque  # Limit the max torque the motor can apply
         )
 
 
@@ -221,10 +205,10 @@ class RobotAScenario(RobotScenario):
 
         #    joint name : (target speed [rad/s], P gain [Nm/(rad/s)], D gain [Nm·s/rad], max torque [Nm])
         speed_params = {
-            'fourcheFL_to_wheelFL': (10.0, 150.0, 5.0, 100.0),
-            'fourcheFR_to_wheelFR': (10.0, 150.0, 5.0, 100.0),
-            'fourcheBL_to_wheelBL': (10.0, 150.0, 5.0, 100.0),
-            'fourcheBR_to_wheelBR': (10.0, 150.0, 5.0, 100.0),
+            'fourcheFL_to_wheelFL': (10.0, 100.0),
+            'fourcheFR_to_wheelFR': (10.0, 100.0),
+            'fourcheBL_to_wheelBL': (10.0, 100.0),
+            'fourcheBR_to_wheelBR': (10.0, 100.0),
         }
 
         # Build mapping from joint names to indices
@@ -234,9 +218,9 @@ class RobotAScenario(RobotScenario):
         }
 
         # Now loop over each wheel joint and apply the PD speed controller
-        for joint_name, (target_speed, Kp, Kd, max_torque) in speed_params.items():
+        for joint_name, (target_speed, max_torque) in speed_params.items():
             joint_index = joint_name_to_index[joint_name]
-            self.apply_speed_PD(robot, joint_index, target_speed, Kp, Kd, max_torque)
+            self.apply_speed_velocity_control(robot, joint_index, target_speed, max_torque)
 
         # Apply dynamics settings to base link
         p.changeDynamics(
@@ -261,11 +245,11 @@ class RobotAScenario(RobotScenario):
                 linkIndex=linkIndex,
                 mass=1.0,
                 lateralFriction=1.0,
-                spinningFriction=0.1,
-                rollingFriction=0.1,
+                spinningFriction=0.001,
+                rollingFriction=0.001,
                 restitution=0.0,
                 linearDamping=0.04,
-                angularDamping=0.04,
+                angularDamping=0.004,
                 contactStiffness=1e5,
                 contactDamping=1e3,
                 frictionAnchor=True

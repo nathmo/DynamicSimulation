@@ -93,7 +93,7 @@
   <joint name="fourcheFL_to_wheelFL" type="revolute">
     <parent link="fourcheFL" />
     <child link="wheelFL" />
-    <origin xyz="0.25 0.075 0" rpy="0 0 0" />
+    <origin xyz="0.25 0 0" rpy="0 0 0" />
     <axis xyz="0 1 0"/>
     <limit effort="10.0" velocity="10.0"/>
   </joint>
@@ -186,7 +186,7 @@
   <joint name="fourcheFR_to_wheelFR" type="revolute">
     <parent link="fourcheFR" />
     <child link="wheelFR" />
-    <origin xyz="0.25 -0.07 0" rpy="0 0 0" />
+    <origin xyz="0.25 0 0" rpy="0 0 0" />
     <axis xyz="0 1 0"/>
     <limit effort="10.0" velocity="10.0"/>
   </joint>
@@ -279,7 +279,7 @@
   <joint name="fourcheBL_to_wheelBL" type="revolute">
     <parent link="fourcheBL" />
     <child link="wheelBL" />
-    <origin xyz="-0.25 0.075 0" rpy="0 0 0" />
+    <origin xyz="-0.25 0 0" rpy="0 0 0" />
     <axis xyz="0 1 0"/>
     <limit effort="10.0" velocity="10.0"/>
   </joint>
@@ -372,7 +372,7 @@
   <joint name="fourcheBR_to_wheelBR" type="revolute">
     <parent link="fourcheBR" />
     <child link="wheelBR" />
-    <origin xyz="-0.25 -0.07 0" rpy="0 0 0" />
+    <origin xyz="-0.25 0 0" rpy="0 0 0" />
     <axis xyz="0 1 0"/>
     <limit effort="10.0" velocity="10.0"/>
   </joint>
