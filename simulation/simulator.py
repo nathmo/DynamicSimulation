@@ -61,7 +61,7 @@ class Simulator:
                 p.stepSimulation()
 
                 if self.plotter:
-                    self.plotter.update(model.get_sensor_data(), model.get_forces(), self.time_step)
+                    self.plotter.update(model.get_sensor_data(), self.time_step)
 
                 time.sleep(self.time_step)
         except KeyboardInterrupt:

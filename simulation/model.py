@@ -5,11 +5,13 @@ from math import pi
 
 # Base class for all scenarios
 class RobotScenario:
-    def __init__(self, physics_client):
+    def __init__(self, physics_client, time_step):
         self.physics_client = physics_client
-        self.bodies = []
+        self.body = None
+        self.time_step = time_step
         self.joint_name_to_index = {}
         self.link_name_to_index = {}
+        self.previous_velocities = {}  # For acceleration calculation
 
     def load(self):
         raise NotImplementedError
@@ -18,54 +20,82 @@ class RobotScenario:
         pass
 
     def get_sensor_data(self):
+        """
+        Returns a dictionary:
+        {
+            link_name: {
+                "position": ...,
+                "velocity": ...,
+                "acceleration": ...,
+                "orientation": ...,
+                "force": ...
+            },
+            ...
+        }
+        """
         data = {}
-        robot_id = self.bodies[0]  # Assuming first entry is the robot
-        num_joints = p.getNumJoints(robot_id)
+        body = self.body
+        num_joints = p.getNumJoints(body)
 
-        for link_index in range(-1, num_joints):  # -1 is the base
-            if link_index == -1:
-                pos, orn = p.getBasePositionAndOrientation(robot_id)
-                lin_vel, ang_vel = p.getBaseVelocity(robot_id)
-            else:
-                state = p.getLinkState(robot_id, link_index, computeLinkVelocity=1)
-                pos, orn = state[0], state[1]
-                lin_vel, ang_vel = state[6], state[7]
+        # Base link: name it "base" or get from somewhere (base has no joint name)
+        base_name = "base"
 
-            data[link_index] = {
+        pos, orn = p.getBasePositionAndOrientation(body)
+        lin_vel, _ = p.getBaseVelocity(body)
+        prev_vel = self.previous_velocities.get(base_name, [0.0, 0.0, 0.0])
+        acc = (np.array(lin_vel) - np.array(prev_vel)) / self.time_step
+        self.previous_velocities[base_name] = lin_vel
+
+        base_force = sum(np.array(p.getJointState(body, j)[2][:3]) for j in range(num_joints))
+
+        data[base_name] = {
+            "position": pos,
+            "velocity": lin_vel,
+            "acceleration": acc.tolist(),
+            "orientation": orn,
+            "force": base_force.tolist()
+        }
+
+        # Links by name
+        for link_idx in range(num_joints):
+            joint_info = p.getJointInfo(body, link_idx)
+            link_name = joint_info[1].decode('utf-8')  # decode bytes to string
+
+            state = p.getLinkState(body, link_idx, computeLinkVelocity=1)
+            pos, orn = state[0], state[1]
+            lin_vel = state[6]
+
+            prev_vel = self.previous_velocities.get(link_name, [0.0, 0.0, 0.0])
+            acc = (np.array(lin_vel) - np.array(prev_vel)) / self.time_step
+            self.previous_velocities[link_name] = lin_vel
+
+            force = p.getJointState(body, link_idx)[2][:3]
+
+            data[link_name] = {
                 "position": pos,
                 "velocity": lin_vel,
+                "acceleration": acc.tolist(),
                 "orientation": orn,
+                "force": list(force)
             }
 
         return data
 
-    def get_forces(self):
-        """
-        Retrieve net joint reaction forces acting on each body in the simulation.
-        Returns a dictionary mapping body unique IDs to [Fx, Fy, Fz] force vectors.
-        """
-        self.forces = {}
+    def get_list_of_segment(self):
+        segments = []
+        num_links = p.getNumJoints(self.body)
 
-        for body in self.bodies:
-            total_force = np.array([0.0, 0.0, 0.0])
-            num_joints = p.getNumJoints(body)
+        # Base segment name
+        segments.append("base")
 
-            if num_joints > 0:
-                for joint_index in range(num_joints):
-                    joint_state = p.getJointState(body, joint_index)
-                    reaction_forces = joint_state[2][:3]  # Only Fx, Fy, Fz
-                    total_force += np.array(reaction_forces)
-            else:
-                # Fallback: use linear velocity as a proxy (not a real force)
-                lin_vel, _ = p.getBaseVelocity(body)
-                total_force = np.array(lin_vel)
+        # Add all link names
+        for link_index in range(num_links):
+            joint_info = p.getJointInfo(self.body, link_index)
+            link_name = joint_info[1].decode('utf-8')
+            segments.append(link_name)
 
-            self.forces[body] = total_force.tolist()
+        return segments
 
-        return self.forces
-
-    def get_bodies(self):
-        return self.bodies
     def apply_spring_damper_PD(self, robot, joint_index, target_position, k, c, tau_max):
         """
         Applies a PD-based spring-damper control using PyBullet's internal POSITION_CONTROL.
@@ -100,6 +130,41 @@ class RobotScenario:
         torque = -k * (angle - rest_angle) - c * velocity
         p.setJointMotorControl2(robot, joint_index, p.TORQUE_CONTROL, force=torque)
 
+    def apply_speed_PD(self, robot, joint_index, target_speed, Kp, Kd, max_torque):
+        """
+        Applies a PD-based speed controller to a revolute joint (wheel).
+
+        Args:
+            robot (int): The PyBullet body unique ID.
+            joint_index (int): The index of the joint to control.
+            target_speed (float): Desired angular velocity (rad/s).
+            Kp (float): Proportional gain.
+            Kd (float): Derivative gain.
+            max_torque (float): Maximum allowable torque (Nm).
+        """
+        # Read current joint state (position, velocity, reactionForces, appliedTorque)
+        _, current_velocity, _, _ = p.getJointState(robot, joint_index)
+
+        # Compute velocity error
+        vel_error = target_speed - current_velocity
+
+        # PD control law (torque = Kp * error - Kd * velocity)
+        torque = Kp * vel_error - Kd * current_velocity
+
+        # Clamp torque to ±max_torque
+        if torque > max_torque:
+            torque = max_torque
+        elif torque < -max_torque:
+            torque = -max_torque
+
+        # Apply the computed torque in TORQUE_CONTROL mode
+        p.setJointMotorControl2(
+            bodyIndex=robot,
+            jointIndex=joint_index,
+            controlMode=p.TORQUE_CONTROL,
+            force=torque
+        )
+
 
 # Scenario: Pendulum
 class PendulumScenario(RobotScenario):
@@ -107,7 +172,7 @@ class PendulumScenario(RobotScenario):
         pendulum = p.loadURDF("urdf/pendulum.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
         p.setJointMotorControl2(pendulum, 0, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
         p.resetJointState(pendulum, 0, np.pi / 2, 0.0)
-        self.bodies.append(pendulum)
+        self.body = pendulum
 
 # Scenario: Robot A
 class RobotAScenario(RobotScenario):
@@ -116,9 +181,9 @@ class RobotAScenario(RobotScenario):
 
         robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 0.2],
                            baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
-                           useFixedBase=False)
+                           useFixedBase=True)
         p.changeDynamics(plane, -1, restitution=0.0, lateralFriction=1.0)
-
+        self.body = robot
         num_joints = p.getNumJoints(robot)
         for i in range(num_joints):
             info = p.getJointInfo(robot, i)
@@ -132,7 +197,6 @@ class RobotAScenario(RobotScenario):
             if joint_type == p.JOINT_REVOLUTE:
                 p.resetJointState(robot, i, 0.0)
 
-        self.bodies += [robot, plane]
         # joint name, stiffness K (Nm/rad), damping C (Nms/rad), rest position (rad), max torque
         spring_params = {
             'fourcheFL_to_wheelFL': (2000.0, 100.0, 0, 50000),
@@ -145,7 +209,23 @@ class RobotAScenario(RobotScenario):
             'base_link_to_hipBR': (500.0, 1000.0, pi / 4, 50000),
         }
 
-        robot = self.bodies[0]
+        # Build mapping from joint names to indices
+        joint_name_to_index = {
+            p.getJointInfo(robot, i)[1].decode(): i
+            for i in range(p.getNumJoints(robot))
+        }
+        for joint_name, (k, c, rest, tau) in spring_params.items():
+            joint_index = joint_name_to_index[joint_name]
+            self.apply_spring_damper_PD(robot, joint_index, rest, k, c, tau)
+        num_joints = p.getNumJoints(robot)
+
+        #    joint name : (target speed [rad/s], P gain [Nm/(rad/s)], D gain [Nm·s/rad], max torque [Nm])
+        speed_params = {
+            'fourcheFL_to_wheelFL': (10.0, 150.0, 5.0, 100.0),
+            'fourcheFR_to_wheelFR': (10.0, 150.0, 5.0, 100.0),
+            'fourcheBL_to_wheelBL': (10.0, 150.0, 5.0, 100.0),
+            'fourcheBR_to_wheelBR': (10.0, 150.0, 5.0, 100.0),
+        }
 
         # Build mapping from joint names to indices
         joint_name_to_index = {
@@ -153,10 +233,10 @@ class RobotAScenario(RobotScenario):
             for i in range(p.getNumJoints(robot))
         }
 
-        for joint_name, (k, c, rest, tau) in spring_params.items():
+        # Now loop over each wheel joint and apply the PD speed controller
+        for joint_name, (target_speed, Kp, Kd, max_torque) in speed_params.items():
             joint_index = joint_name_to_index[joint_name]
-            self.apply_spring_damper_PD(robot, joint_index, rest, k, c, tau)
-        num_joints = p.getNumJoints(robot)
+            self.apply_speed_PD(robot, joint_index, target_speed, Kp, Kd, max_torque)
 
         # Apply dynamics settings to base link
         p.changeDynamics(
@@ -204,9 +284,6 @@ class RobotAScenario(RobotScenario):
             'base_link_to_hipBR': (1000.0, 10.0, pi/4),
         }
 
-        #robot = self.bodies[0]
-        #for joint, (k, c, rest) in spring_params.items():
-        #    self.apply_spring_damper_torque(robot, joint, k, c, rest)
 
 # Top-level Model that wraps scenario
 class Model:
@@ -216,11 +293,11 @@ class Model:
         "A": RobotAScenario,
     }
 
-    def __init__(self, physics_client, variant="default"):
+    def __init__(self, physics_client, time_step, variant="default"):
         if variant not in self.scenario_classes:
             raise ValueError(f"Unknown variant: {variant}")
-
-        self.scenario = self.scenario_classes[variant](physics_client)
+        self.time_step = time_step
+        self.scenario = self.scenario_classes[variant](physics_client, self.time_step)
         self.scenario.load()
 
     def update(self):
@@ -229,11 +306,8 @@ class Model:
     def get_sensor_data(self):
         return self.scenario.get_sensor_data()
 
-    def get_forces(self):
-        return self.scenario.get_forces()
-
-    def get_bodies(self):
-        return self.scenario.get_bodies()
+    def get_list_of_segment(self):
+        return self.scenario.get_list_of_segment()
 
     def print_joint_mapping(self):
         print("Joint Name → Index mapping:")
@@ -246,5 +320,5 @@ class Model:
             print(f"  {name} → {idx}")
 
 # Loader function
-def load_model(physics_client, variant="A"):
-    return Model(physics_client, variant)
+def load_model(physics_client, variant="A", time_step=1/120):
+    return Model(physics_client, time_step, variant)

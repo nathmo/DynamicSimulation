@@ -13,89 +13,93 @@ class Plotter(QMainWindow):
     def __init__(self, bodies):
         super().__init__()
         self.setWindowTitle("Simulation Plots")
+
+        # bodies should be a list of link indices, e.g. [-1, 0, 1, ..., 12]
         self.bodies = bodies
-        self.data = {body: {"time": [], "position": [], "velocity": [], "acceleration": [], "force": []} for body in
-                     bodies}
+        self.n_bodies = len(bodies)
 
-        self.fig, self.axes = plt.subplots(len(bodies), 4, figsize=(12, 3 * len(bodies)), squeeze=False)
+        # Map link_index to row index in plot grid
+        self.link_to_row = {link: i for i, link in enumerate(self.bodies)}
+
+        # Initialize data dict for all bodies
+        self.data = {
+            link: {"time": [], "position": [], "velocity": [], "acceleration": [], "force": []}
+            for link in self.bodies
+        }
+        # Create subplots once for all bodies and 4 metrics
+        self.fig, self.axes = plt.subplots(self.n_bodies, 4, figsize=(12, 3 * self.n_bodies), squeeze=False)
         self.canvas = FigureCanvas(self.fig)
-        self.lines = {}
 
+        # Initialize line plots for each link and metric
+        self.lines = {}
+        for i, link in enumerate(self.bodies):
+            for j, metric in enumerate(["position", "velocity", "acceleration", "force"]):
+                line, = self.axes[i, j].plot([], [], label=metric)
+                self.axes[i, j].set_title(f"Body {link} - {metric}")
+                self.axes[i, j].legend()
+                self.lines[(link, metric)] = line
+
+        # Qt layout setup
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout()
         layout.addWidget(self.canvas)
         central_widget.setLayout(layout)
 
-        for i, body in enumerate(bodies):
-            for j, metric in enumerate(["position", "velocity", "acceleration", "force"]):
-                self.lines[(body, metric)], = self.axes[i, j].plot([], [], label=metric)
-                self.axes[i, j].set_title(f"Body {body} - {metric}")
-                self.axes[i, j].legend()
-
         self.show()
 
-        # Get the initial minute when the program starts
+        # Start time for naming saved plots
         self.start_time = datetime.now()
         self.start_minute = self.start_time.minute
 
-        # Start background thread to save plot every 2 seconds
+        # Thread control
         self.stop_thread = False
-        self.save_thread = threading.Thread(target=self.save_plot_periodically)
+        self.save_thread = threading.Thread(target=self.save_plot_periodically, daemon=True)
         self.save_thread.start()
 
-    def update(self, sensor_data, forces, time_step):
-        for i, (body, metrics) in enumerate(self.data.items()):
-            self.data[body]["time"].append(len(self.data[body]["time"]) * time_step)
-            self.data[body]["position"].append(np.linalg.norm(sensor_data[body]["position"]))
-            self.data[body]["velocity"].append(np.linalg.norm(sensor_data[body]["velocity"]))
+    def update(self, sensor_data, time_step):
+        for link_index, metrics in sensor_data.items():
+            # Only update if link_index known
+            if link_index not in self.data:
+                print("link_index not found in previous data : "+str(link_index))
+                # Optional: ignore unknown indices or initialize if wanted
+                continue
 
-            if len(self.data[body]["velocity"]) > 1:
-                acc = (self.data[body]["velocity"][-1] - self.data[body]["velocity"][-2]) / time_step
-                self.data[body]["acceleration"].append(acc)
-            else:
-                self.data[body]["acceleration"].append(0)
-
-            self.data[body]["force"].append(np.linalg.norm(forces.get(body, [0, 0, 0])))
-
+            # Append new data points
+            self.data[link_index]["time"].append(len(self.data[link_index]["time"]) * time_step)
+            self.data[link_index]["position"].append(np.linalg.norm(metrics["position"]))
+            self.data[link_index]["velocity"].append(np.linalg.norm(metrics["velocity"]))
+            self.data[link_index]["acceleration"].append(np.linalg.norm(metrics["acceleration"]))
+            self.data[link_index]["force"].append(np.linalg.norm(metrics["force"]))
+            # Update plots using the mapping
+            row = self.link_to_row[link_index]
             for j, metric in enumerate(["position", "velocity", "acceleration", "force"]):
-                self.lines[(body, metric)].set_xdata(self.data[body]["time"])
-                self.lines[(body, metric)].set_ydata(self.data[body][metric])
-                self.axes[i, j].relim()  # Ensure proper axes scaling
-                self.axes[i, j].autoscale_view()
+                line = self.lines[(link_index, metric)]
+                line.set_xdata(self.data[link_index]["time"])
+                line.set_ydata(self.data[link_index][metric])
+                ax = self.axes[row, j]
+                ax.relim()
+                ax.autoscale_view()
 
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
     def closeEvent(self, event):
-        # Stop the save thread when closing the window
         self.stop_thread = True
-        self.save_thread.join()  # Wait for the thread to finish
+        self.save_thread.join()
         event.accept()
 
     def save_plot_periodically(self):
-        last_minute = None
         while not self.stop_thread:
-            # Get current time, but use the start time minute
             current_time = datetime.now()
-
-            # If it's still the same minute as when the program started, save the plot
+            # Save plot only if still in start minute
             if current_time.minute == self.start_minute:
-                self.save_plots(current_time)
-            else:
-                # Wait for the next cycle if the minute changed (no saving during minute change)
-                time.sleep(2)
-                continue
+                self.save_plots()
+            time.sleep(20)
 
-            # Sleep for 2 seconds before checking again
-            time.sleep(2)
-
-    def save_plots(self, current_time):
-        # Save plot every 2 seconds (overwrite previous image)
+    def save_plots(self):
         os.makedirs("output_graph", exist_ok=True)
-        timestamp = self.start_time.strftime("%Y_%m_%d_%H_%M")  # Use the minute from start time
-
-        # Save the plot with a fixed filename to overwrite the previous one
+        timestamp = self.start_time.strftime("%Y_%m_%d_%H_%M")
         filename = f"output_graph/simulation_{timestamp}.png"
         self.fig.savefig(filename)
         print(f"Saved plot: {filename}")

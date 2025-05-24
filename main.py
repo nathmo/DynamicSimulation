@@ -7,9 +7,9 @@ from visualization.plotter import Plotter
 def main():
     app = QApplication([])  # Ensure QApplication is initialized first
     simulator = Simulator(time_step=1/120)
-    model = load_model(simulator.physics_client, variant="A")
-    bodies = model.get_bodies()  # Get all bodies from the model
-    plotter = Plotter(bodies)
+    model = load_model(simulator.physics_client, variant="A", time_step=1/120)
+
+    plotter = Plotter(model.get_list_of_segment())
 
     simulator.register_plotter(plotter)
     commands = CommandHandler(simulator)
