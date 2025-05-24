@@ -163,7 +163,7 @@ class RobotAScenario(RobotScenario):
     def load(self):
         plane = p.loadURDF("urdf/plane_flat.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
 
-        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 0.2],
+        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 1],
                            baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
                            useFixedBase=True)
         p.changeDynamics(plane, -1, restitution=0.0, lateralFriction=1.0)
@@ -183,10 +183,10 @@ class RobotAScenario(RobotScenario):
 
         # joint name, stiffness K (Nm/rad), damping C (Nms/rad), rest position (rad), max torque
         spring_params = {
-            'fourcheFL_to_wheelFL': (20000.0, 1000.0, 0, 50000),
-            'fourcheFR_to_wheelFR': (20000.0, 1000.0, 0, 50000),
-            'fourcheBL_to_wheelBL': (20000.0, 1000.0, 0, 50000),
-            'fourcheBR_to_wheelBR': (20000.0, 1000.0, 0, 50000),
+            'hipFL_to_fourcheFL': (2000.0, 100.0, 0, 50000),
+            'hipFR_to_fourcheFR': (2000.0, 100.0, 0, 50000),
+            'hipBL_to_fourcheBL': (2000.0, 100.0, 0, 50000),
+            'hipBR_to_fourcheBR': (2000.0, 100.0, 0, 50000),
             'base_link_to_hipFL': (500.0, 1000.0, -pi / 4, 50000),
             'base_link_to_hipFR': (500.0, 1000.0, -pi / 4, 50000),
             'base_link_to_hipBL': (500.0, 1000.0, pi / 4, 50000),
@@ -256,18 +256,107 @@ class RobotAScenario(RobotScenario):
             )
 
     def update(self):
-        # joint name, K , c, rest position
+        pass
+
+# Scenario: Robot B
+class RobotBScenario(RobotScenario):
+    def load(self):
+        plane = p.loadURDF("urdf/plane_flat_bossed.urdf", basePosition=[0, 0, -0.05], useFixedBase=True, flags=p.URDF_USE_SELF_COLLISION or p.URDF_USE_MESH_COLLISION)
+
+        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 1],
+                           baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
+                           useFixedBase=True)
+        p.changeDynamics(plane, -1, restitution=0.0, lateralFriction=1.0)
+        self.body = robot
+        num_joints = p.getNumJoints(robot)
+        for i in range(num_joints):
+            info = p.getJointInfo(robot, i)
+            joint_name = info[1].decode("utf-8")
+            link_name = info[12].decode("utf-8")
+            joint_type = info[2]
+            self.joint_name_to_index[joint_name] = i
+            self.link_name_to_index[link_name] = i
+
+            p.setJointMotorControl2(robot, i, p.VELOCITY_CONTROL, force=0)
+            if joint_type == p.JOINT_REVOLUTE:
+                p.resetJointState(robot, i, 0.0)
+
+        # joint name, stiffness K (Nm/rad), damping C (Nms/rad), rest position (rad), max torque
         spring_params = {
-            'fourcheFL_to_wheelFL': (2000.0, 100.0, 0),
-            'fourcheFR_to_wheelFR': (2000.0, 100.0, 0),
-            'fourcheBL_to_wheelBL': (2000.0, 100.0, 0),
-            'fourcheBR_to_wheelBR': (2000.0, 100.0, 0),
-            'base_link_to_hipFL': (1000.0, 10.0, -pi/4),
-            'base_link_to_hipFR': (1000.0, 10.0, -pi/4),
-            'base_link_to_hipBL': (1000.0, 10.0, pi/4),
-            'base_link_to_hipBR': (1000.0, 10.0, pi/4),
+            'hipFL_to_fourcheFL': (2000.0, 100.0, 0, 50000),
+            'hipFR_to_fourcheFR': (2000.0, 100.0, 0, 50000),
+            'hipBL_to_fourcheBL': (2000.0, 100.0, 0, 50000),
+            'hipBR_to_fourcheBR': (2000.0, 100.0, 0, 50000),
+            'base_link_to_hipFL': (500.0, 1000.0, -pi / 4, 50000),
+            'base_link_to_hipFR': (500.0, 1000.0, -pi / 4, 50000),
+            'base_link_to_hipBL': (500.0, 1000.0, pi / 4, 50000),
+            'base_link_to_hipBR': (500.0, 1000.0, pi / 4, 50000),
         }
 
+        # Build mapping from joint names to indices
+        joint_name_to_index = {
+            p.getJointInfo(robot, i)[1].decode(): i
+            for i in range(p.getNumJoints(robot))
+        }
+        for joint_name, (k, c, rest, tau) in spring_params.items():
+            joint_index = joint_name_to_index[joint_name]
+            self.apply_spring_damper_PD(robot, joint_index, rest, k, c, tau)
+        num_joints = p.getNumJoints(robot)
+
+        #    joint name : (target speed [rad/s], P gain [Nm/(rad/s)], D gain [Nm·s/rad], max torque [Nm])
+        speed_params = {
+            'fourcheFL_to_wheelFL': (10.0, 100.0),
+            'fourcheFR_to_wheelFR': (10.0, 100.0),
+            'fourcheBL_to_wheelBL': (10.0, 100.0),
+            'fourcheBR_to_wheelBR': (10.0, 100.0),
+        }
+
+        # Build mapping from joint names to indices
+        joint_name_to_index = {
+            p.getJointInfo(robot, i)[1].decode(): i
+            for i in range(p.getNumJoints(robot))
+        }
+
+        # Now loop over each wheel joint and apply the PD speed controller
+        for joint_name, (target_speed, max_torque) in speed_params.items():
+            joint_index = joint_name_to_index[joint_name]
+            self.apply_speed_velocity_control(robot, joint_index, target_speed, max_torque)
+
+        # Apply dynamics settings to base link
+        p.changeDynamics(
+            bodyUniqueId=robot,
+            linkIndex=-1,  # Base link
+            mass=1.0,
+            lateralFriction=1.0,
+            spinningFriction=0.1,
+            rollingFriction=0.1,
+            restitution=0.0,
+            linearDamping=0.04,
+            angularDamping=0.04,
+            contactStiffness=1e5,
+            contactDamping=1e3,
+            frictionAnchor=True
+        )
+
+        # Apply dynamics settings to all child links
+        for linkIndex in range(num_joints):
+            p.changeDynamics(
+                bodyUniqueId=robot,
+                linkIndex=linkIndex,
+                mass=1.0,
+                lateralFriction=1.0,
+                spinningFriction=0.001,
+                rollingFriction=0.001,
+                restitution=0.0,
+                linearDamping=0.04,
+                angularDamping=0.004,
+                contactStiffness=1e5,
+                contactDamping=1e3,
+                frictionAnchor=True
+            )
+
+    def update(self):
+        pass
 
 # Top-level Model that wraps scenario
 class Model:
@@ -275,6 +364,7 @@ class Model:
         "default": PendulumScenario,
         "PENDULUM": PendulumScenario,
         "A": RobotAScenario,
+        "B": RobotBScenario,
     }
 
     def __init__(self, physics_client, time_step, variant="default"):

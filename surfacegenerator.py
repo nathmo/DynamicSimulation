@@ -53,7 +53,7 @@ def generate_urdf(mesh_filename, urdf_filename, mesh_scale=(1, 1, 1)):
 
 # Example function: wavy surface
 def example_function(x, y):
-    return 0.05 * np.sin(2 * np.pi * x) * np.cos(2 * np.pi * y)
+    return 0.25 * np.sin(0.5 * np.pi * x) * np.cos(0.5 * np.pi * y)
 
 if __name__ == "__main__":
     # Configuration
@@ -63,8 +63,8 @@ if __name__ == "__main__":
     mesh_dir = Path("urdf")
     mesh_dir.mkdir(exist_ok=True)
 
-    stl_filename = mesh_dir / "plane_mesh_flat.stl"
-    urdf_filename = mesh_dir / "plane_flat.urdf"
+    stl_filename = mesh_dir / "plane_mesh_flat_bossed.stl"
+    urdf_filename = mesh_dir / "plane_flat_bossed.urdf"
 
     # Generate mesh and export
     mesh = generate_mesh_from_function(example_function, x_range, y_range, resolution)
