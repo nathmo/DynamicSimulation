@@ -47,31 +47,30 @@ class Plotter(QMainWindow):
         central_widget.setLayout(layout)
 
         self.show()
-
+        self._last_refresh_time = 0
         # Start time for naming saved plots
         self.start_time = datetime.now()
         self.start_minute = self.start_time.minute
 
-        # Thread control
-        self.stop_thread = False
-        self.save_thread = threading.Thread(target=self.save_plot_periodically, daemon=True)
-        self.save_thread.start()
-
-    def update(self, sensor_data, time_step):
+    def update_sensor_data(self, sensor_data, time_step):
         for link_index, metrics in sensor_data.items():
-            # Only update if link_index known
             if link_index not in self.data:
-                print("link_index not found in previous data : "+str(link_index))
-                # Optional: ignore unknown indices or initialize if wanted
+                print("link_index not found in previous data : " + str(link_index))
                 continue
-
-            # Append new data points
             self.data[link_index]["time"].append(len(self.data[link_index]["time"]) * time_step)
             self.data[link_index]["position"].append(np.linalg.norm(metrics["position"]))
             self.data[link_index]["velocity"].append(np.linalg.norm(metrics["velocity"]))
             self.data[link_index]["acceleration"].append(np.linalg.norm(metrics["acceleration"]))
             self.data[link_index]["force"].append(np.linalg.norm(metrics["force"]))
-            # Update plots using the mapping
+        now = time.time()
+        if now - self._last_refresh_time > 5.0:  # only update the plot once every 5 sec
+            self.refresh_plot()
+            self.save_plots()
+            self._last_refresh_time = now
+
+
+    def refresh_plot(self):
+        for link_index in self.data:
             row = self.link_to_row[link_index]
             for j, metric in enumerate(["position", "velocity", "acceleration", "force"]):
                 line = self.lines[(link_index, metric)]
@@ -80,22 +79,8 @@ class Plotter(QMainWindow):
                 ax = self.axes[row, j]
                 ax.relim()
                 ax.autoscale_view()
-
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
-
-    def closeEvent(self, event):
-        self.stop_thread = True
-        self.save_thread.join()
-        event.accept()
-
-    def save_plot_periodically(self):
-        while not self.stop_thread:
-            current_time = datetime.now()
-            # Save plot only if still in start minute
-            if current_time.minute == self.start_minute:
-                self.save_plots()
-            time.sleep(20)
 
     def save_plots(self):
         os.makedirs("output_graph", exist_ok=True)

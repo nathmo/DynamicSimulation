@@ -54,6 +54,8 @@ class Simulator:
 
         try:
             while True:
+                start_time = time.perf_counter()
+
                 if self.command_handler:
                     self.command_handler.process_input()
 
@@ -61,9 +63,12 @@ class Simulator:
                 p.stepSimulation()
 
                 if self.plotter:
-                    self.plotter.update(model.get_sensor_data(), self.time_step)
+                    self.plotter.update_sensor_data(model.get_sensor_data(), self.time_step)
 
-                time.sleep(self.time_step)
+                elapsed = time.perf_counter() - start_time
+                sleep_time = self.time_step - elapsed
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
         except KeyboardInterrupt:
             pass  # Graceful exit on manual interruption
 
