@@ -32,19 +32,19 @@ class CommandHandler:
 
     def handle_camera(self, keys):
         # Pitch and yaw control (WASD)
-        if ord('w') in keys and keys[ord('w')] & p.KEY_IS_DOWN:
+        if ord('w') in keys and keys[ord('z')] & p.KEY_IS_DOWN:
             self.camera_pitch = max(self.camera_pitch - 1, -89)
-        if ord('s') in keys and keys[ord('s')] & p.KEY_IS_DOWN:
+        if ord('s') in keys and keys[ord('h')] & p.KEY_IS_DOWN:
             self.camera_pitch = min(self.camera_pitch + 1, 89)
-        if ord('a') in keys and keys[ord('a')] & p.KEY_IS_DOWN:
+        if ord('a') in keys and keys[ord('g')] & p.KEY_IS_DOWN:
             self.camera_yaw -= 1
-        if ord('d') in keys and keys[ord('d')] & p.KEY_IS_DOWN:
+        if ord('d') in keys and keys[ord('j')] & p.KEY_IS_DOWN:
             self.camera_yaw += 1
 
         # Zoom control (Q and E)
-        if ord('q') in keys and keys[ord('q')] & p.KEY_IS_DOWN:
+        if ord('q') in keys and keys[ord('t')] & p.KEY_IS_DOWN:
             self.camera_distance = max(self.camera_distance - 0.1, 0.1)
-        if ord('e') in keys and keys[ord('e')] & p.KEY_IS_DOWN:
+        if ord('e') in keys and keys[ord('u')] & p.KEY_IS_DOWN:
             self.camera_distance += 0.1
 
         # Camera target translation relative to camera orientation

@@ -183,10 +183,10 @@ class RobotAScenario(RobotScenario):
 
         # joint name, stiffness K (Nm/rad), damping C (Nms/rad), rest position (rad), max torque
         spring_params = {
-            'fourcheFL_to_wheelFL': (2000.0, 100.0, 0, 50000),
-            'fourcheFR_to_wheelFR': (2000.0, 100.0, 0, 50000),
-            'fourcheBL_to_wheelBL': (2000.0, 100.0, 0, 50000),
-            'fourcheBR_to_wheelBR': (2000.0, 100.0, 0, 50000),
+            'fourcheFL_to_wheelFL': (20000.0, 1000.0, 0, 50000),
+            'fourcheFR_to_wheelFR': (20000.0, 1000.0, 0, 50000),
+            'fourcheBL_to_wheelBL': (20000.0, 1000.0, 0, 50000),
+            'fourcheBR_to_wheelBR': (20000.0, 1000.0, 0, 50000),
             'base_link_to_hipFL': (500.0, 1000.0, -pi / 4, 50000),
             'base_link_to_hipFR': (500.0, 1000.0, -pi / 4, 50000),
             'base_link_to_hipBL': (500.0, 1000.0, pi / 4, 50000),
