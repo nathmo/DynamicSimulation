@@ -10,6 +10,7 @@ class Simulator:
         self.physics_client = p.connect(p.GUI)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0, 0, -9.81)
+
         self.time_step = time_step
         self.command_handler = None
         self.plotter = None

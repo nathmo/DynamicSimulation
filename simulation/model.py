@@ -66,6 +66,40 @@ class RobotScenario:
 
     def get_bodies(self):
         return self.bodies
+    def apply_spring_damper_PD(self, robot, joint_index, target_position, k, c, tau_max):
+        """
+        Applies a PD-based spring-damper control using PyBullet's internal POSITION_CONTROL.
+
+        Args:
+            robot (int): PyBullet body ID.
+            joint_index (int): Index of the joint to control.
+            target_position (float): Desired angular position (in radians).
+            k (float): Torsional spring constant (Nm/rad).
+            c (float): Damping coefficient (Nms/rad).
+            tau_max (float): Max torque to apply at the joint (Nm).
+        """
+        # Map physical parameters to PyBullet's dimensionless gains:
+        # positionGain = k / tau_max
+        # velocityGain = c / tau_max
+        position_gain = k / tau_max
+        velocity_gain = c / tau_max
+
+        p.setJointMotorControl2(
+            bodyUniqueId=robot,
+            jointIndex=joint_index,
+            controlMode=p.POSITION_CONTROL,
+            targetPosition=target_position,
+            positionGain=position_gain,
+            velocityGain=velocity_gain,
+            force=tau_max
+        )
+
+    def apply_spring_damper_torque(self, robot, joint_name, k, c, rest_angle):
+        joint_index = self.joint_name_to_index[joint_name]
+        angle, velocity = p.getJointState(robot, joint_index)[:2]
+        torque = -k * (angle - rest_angle) - c * velocity
+        p.setJointMotorControl2(robot, joint_index, p.TORQUE_CONTROL, force=torque)
+
 
 # Scenario: Pendulum
 class PendulumScenario(RobotScenario):
@@ -78,10 +112,12 @@ class PendulumScenario(RobotScenario):
 # Scenario: Robot A
 class RobotAScenario(RobotScenario):
     def load(self):
-        plane = p.loadURDF("urdf/plane.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
-        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 2],
+        plane = p.loadURDF("urdf/plane_flat.urdf", basePosition=[0, 0, -0.05], useFixedBase=True)
+
+        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 0.2],
                            baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
                            useFixedBase=False)
+        p.changeDynamics(plane, -1, restitution=0.0, lateralFriction=1.0)
 
         num_joints = p.getNumJoints(robot)
         for i in range(num_joints):
@@ -97,14 +133,66 @@ class RobotAScenario(RobotScenario):
                 p.resetJointState(robot, i, 0.0)
 
         self.bodies += [robot, plane]
+        # joint name, stiffness K (Nm/rad), damping C (Nms/rad), rest position (rad), max torque
+        spring_params = {
+            'fourcheFL_to_wheelFL': (2000.0, 100.0, 0, 50000),
+            'fourcheFR_to_wheelFR': (2000.0, 100.0, 0, 50000),
+            'fourcheBL_to_wheelBL': (2000.0, 100.0, 0, 50000),
+            'fourcheBR_to_wheelBR': (2000.0, 100.0, 0, 50000),
+            'base_link_to_hipFL': (500.0, 1000.0, -pi / 4, 50000),
+            'base_link_to_hipFR': (500.0, 1000.0, -pi / 4, 50000),
+            'base_link_to_hipBL': (500.0, 1000.0, pi / 4, 50000),
+            'base_link_to_hipBR': (500.0, 1000.0, pi / 4, 50000),
+        }
 
-    def apply_spring_damper_torque(self, robot, joint_name, k, c, rest_angle):
-        joint_index = self.joint_name_to_index[joint_name]
-        angle, velocity = p.getJointState(robot, joint_index)[:2]
-        torque = -k * (angle - rest_angle) - c * velocity
-        p.setJointMotorControl2(robot, joint_index, p.TORQUE_CONTROL, force=torque)
+        robot = self.bodies[0]
+
+        # Build mapping from joint names to indices
+        joint_name_to_index = {
+            p.getJointInfo(robot, i)[1].decode(): i
+            for i in range(p.getNumJoints(robot))
+        }
+
+        for joint_name, (k, c, rest, tau) in spring_params.items():
+            joint_index = joint_name_to_index[joint_name]
+            self.apply_spring_damper_PD(robot, joint_index, rest, k, c, tau)
+        num_joints = p.getNumJoints(robot)
+
+        # Apply dynamics settings to base link
+        p.changeDynamics(
+            bodyUniqueId=robot,
+            linkIndex=-1,  # Base link
+            mass=1.0,
+            lateralFriction=1.0,
+            spinningFriction=0.1,
+            rollingFriction=0.1,
+            restitution=0.0,
+            linearDamping=0.04,
+            angularDamping=0.04,
+            contactStiffness=1e5,
+            contactDamping=1e3,
+            frictionAnchor=True
+        )
+
+        # Apply dynamics settings to all child links
+        for linkIndex in range(num_joints):
+            p.changeDynamics(
+                bodyUniqueId=robot,
+                linkIndex=linkIndex,
+                mass=1.0,
+                lateralFriction=1.0,
+                spinningFriction=0.1,
+                rollingFriction=0.1,
+                restitution=0.0,
+                linearDamping=0.04,
+                angularDamping=0.04,
+                contactStiffness=1e5,
+                contactDamping=1e3,
+                frictionAnchor=True
+            )
 
     def update(self):
+        # joint name, K , c, rest position
         spring_params = {
             'fourcheFL_to_wheelFL': (2000.0, 100.0, 0),
             'fourcheFR_to_wheelFR': (2000.0, 100.0, 0),
@@ -116,9 +204,9 @@ class RobotAScenario(RobotScenario):
             'base_link_to_hipBR': (1000.0, 10.0, pi/4),
         }
 
-        robot = self.bodies[0]
-        for joint, (k, c, rest) in spring_params.items():
-            self.apply_spring_damper_torque(robot, joint, k, c, rest)
+        #robot = self.bodies[0]
+        #for joint, (k, c, rest) in spring_params.items():
+        #    self.apply_spring_damper_torque(robot, joint, k, c, rest)
 
 # Top-level Model that wraps scenario
 class Model:
