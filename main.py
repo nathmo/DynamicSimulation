@@ -7,7 +7,7 @@ from visualization.plotter import Plotter
 def main():
     app = QApplication([])  # Ensure QApplication is initialized first
     simulator = Simulator(time_step=1/240)
-    model = load_model(simulator.physics_client, variant="D", time_step=1/240)
+    model = load_model(simulator.physics_client, variant="B", time_step=1/240)
 
     plotter = Plotter(model.get_list_of_segment())
 

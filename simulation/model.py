@@ -328,7 +328,7 @@ class RobotBScenario(RobotScenario):
     def load(self):
         plane  = generate_terrain_from_function(terrain_fn_A)
 
-        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 0.4],
+        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 1.2],
                            baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
                            useFixedBase=True)
         p.changeDynamics(plane, -1, restitution=0.0, lateralFriction=1.0)
@@ -550,7 +550,7 @@ class RobotDScenario(RobotScenario):
         spring_params = {
             'hipFL_to_fourcheFL': (0.20, 300.0, 0, 50000),
             'hipFR_to_fourcheFR': (0.20, 300.0, 0, 50000),
-            'base_link_to_hipFL': (500.0, 1000.0, pi / 4.5, 50000),
+            'base_link_to_hipFL': (500.0, 1000.0, pi / 5, 50000),
             'base_link_to_hipFR': (500.0, 1000.0, pi / 4, 50000),
         }
 
