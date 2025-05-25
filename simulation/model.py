@@ -2,6 +2,62 @@ import pybullet as p
 import numpy as np
 import math
 from math import pi
+import os
+
+
+def generate_terrain_from_function(height_fn, x_size=20.0, y_size=20.0, resolution=0.05, z_scale=1.0, base_z=0.5):
+    """
+    Generates a PyBullet heightfield from a height function f(x, y).
+
+    Args:
+        height_fn (function): Function of the form f(x, y) returning float or np.array of heights.
+        x_size (float): Size of terrain in X direction (meters).
+        y_size (float): Size of terrain in Y direction (meters).
+        resolution (float): Grid spacing (meters).
+        z_scale (float): Vertical exaggeration factor.
+        base_z (float): Base Z-position for the terrain object.
+
+    Returns:
+        int: PyBullet body ID of the loaded terrain.
+    """
+    nx = int(x_size / resolution)
+    ny = int(y_size / resolution)
+    xs = np.linspace(-x_size / 2, x_size / 2, nx)
+    ys = np.linspace(-y_size / 2, y_size / 2, ny)
+    xx, yy = np.meshgrid(xs, ys)
+
+    zz = height_fn(xx, yy) * z_scale
+    zz = zz.astype(np.float32)
+
+    # Normalize heightfield to [0, 1]
+    min_z = np.min(zz)
+    max_z = np.max(zz)
+    range_z = max_z - min_z if max_z > min_z else 1.0
+    zz_normalized = (zz - min_z) / range_z
+
+    # Flatten row-major for PyBullet
+    heightfield_data = zz_normalized.flatten(order="C")
+
+    terrain_shape = p.createCollisionShape(
+        shapeType=p.GEOM_HEIGHTFIELD,
+        meshScale=[x_size / nx, y_size / ny, range_z],
+        heightfieldData=heightfield_data.tolist(),
+        numHeightfieldRows=ny,
+        numHeightfieldColumns=nx,
+        replaceHeightfieldIndex=-1
+    )
+
+    terrain_body = p.createMultiBody(
+        baseMass=0,
+        baseCollisionShapeIndex=terrain_shape,
+        basePosition=[0, 0, base_z + min_z],
+        baseOrientation=[0, 0, 0, 1]
+    )
+
+    return terrain_body
+
+def terrain_fn_A(x, y):
+    return 0.25 * np.sin(0.5 * np.pi * x) * np.cos(0.5 * np.pi * y)
 
 # Base class for all scenarios
 class RobotScenario:
@@ -261,9 +317,9 @@ class RobotAScenario(RobotScenario):
 # Scenario: Robot B
 class RobotBScenario(RobotScenario):
     def load(self):
-        plane = p.loadURDF("urdf/plane_flat_bossed.urdf", basePosition=[0, 0, -0.05], useFixedBase=True, flags=p.URDF_USE_SELF_COLLISION or p.URDF_USE_MESH_COLLISION)
+        plane  = generate_terrain_from_function(terrain_fn_A)
 
-        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 1],
+        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 0.2],
                            baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
                            useFixedBase=True)
         p.changeDynamics(plane, -1, restitution=0.0, lateralFriction=1.0)
