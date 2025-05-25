@@ -5,6 +5,7 @@
     <child link="base_link" />
     <origin xyz="0 0 1" rpy="0 0 0" />
   </joint>
+
   <link name="base_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -33,6 +34,7 @@
     <axis xyz="0 -1 0"/>
     <limit effort="1000.0" lower="-1.5" upper="0" velocity="0.5"/>
   </joint>
+
   <link name="hipFL">
     <visual>
       <origin xyz="0.5 0 0" rpy="0 0 0" />
@@ -52,8 +54,7 @@
     <inertial>
       <origin xyz="0.5 0 0" rpy="0 0 0" />
       <mass value="5" />
-      <!-- inertia scaled from 0.1 to 0.5 for a 5 kg mass -->
-      <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.5" />
+      <inertia ixx="0.2" ixy="0" ixz="0" iyy="0.2" iyz="0" izz="0.2" />
     </inertial>
   </link>
 
@@ -64,6 +65,7 @@
     <axis xyz="-1 0 0"/>
     <limit effort="1000.0" lower="-1" upper="1" velocity="0.5"/>
   </joint>
+
   <link name="fourcheFL">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -83,7 +85,6 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="5" />
-      <!-- inertia scaled from 0.1 to 0.5 -->
       <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.5" />
     </inertial>
   </link>
@@ -95,6 +96,7 @@
     <axis xyz="0 1 0"/>
     <limit effort="10.0" velocity="10.0"/>
   </joint>
+
   <link name="wheelFL">
     <visual>
       <origin xyz="0 0 0" rpy="1.570796326794897 0 0" />
@@ -113,9 +115,8 @@
     </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="5" />
-      <!-- inertia scaled from 0.1 to 0.5 -->
-      <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.5" />
+      <mass value="10" />
+      <inertia ixx="3" ixy="0" ixz="0" iyy="5" iyz="0" izz="3" />
     </inertial>
   </link>
 
@@ -126,6 +127,7 @@
     <axis xyz="0 -1 0"/>
     <limit effort="1000.0" lower="-1.5" upper="0" velocity="0.5"/>
   </joint>
+
   <link name="hipFR">
     <visual>
       <origin xyz="0.5 0 0" rpy="0 0 0" />
@@ -146,7 +148,7 @@
       <origin xyz="0.5 0 0" rpy="0 0 0" />
       <mass value="5" />
       <!-- inertia scaled from 0.1 to 0.5 -->
-      <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.5" />
+      <inertia ixx="0.5" ixy="0" ixz="0" iyy="1" iyz="0" izz="0.5" />
     </inertial>
   </link>
 
@@ -157,6 +159,7 @@
     <axis xyz="-1 0 0"/>
     <limit effort="1000.0" lower="-1" upper="1" velocity="0.5"/>
   </joint>
+
   <link name="fourcheFR">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -176,7 +179,6 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="5" />
-      <!-- inertia scaled from 0.1 to 0.5 -->
       <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.5" />
     </inertial>
   </link>
@@ -207,8 +209,7 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <mass value="5" />
-      <!-- inertia scaled from 0.3 to 1.5 for a 5 kg mass -->
-      <inertia ixx="1.5" ixy="0" ixz="0" iyy="1.5" iyz="0" izz="1.5" />
+      <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.3" />
     </inertial>
   </link>
 
@@ -299,7 +300,7 @@
     </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="5" />
+      <mass value="10" />
       <!-- inertia scaled from 0.3 to 1.5 -->
       <inertia ixx="1.5" ixy="0" ixz="0" iyy="1.5" iyz="0" izz="1.5" />
     </inertial>
@@ -392,7 +393,7 @@
     </collision>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0" />
-      <mass value="5" />
+      <mass value="10" />
       <!-- inertia scaled from 0.3 to 1.5 -->
       <inertia ixx="1.5" ixy="0" ixz="0" iyy="1.5" iyz="0" izz="1.5" />
     </inertial>
