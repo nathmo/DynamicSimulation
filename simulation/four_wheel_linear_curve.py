@@ -23,14 +23,14 @@ class RobotFourWheelLinearCurve(RobotScenario):
         p.getContactPoints(bodyA=robot)
         # joint name, stiffness K (Nm/rad), damping C (Nms/rad), rest position (rad), max torque
         spring_params = {
-            'hipFL_to_legFL': (0.20, 300.0, 0, 50000),
-            'hipFR_to_legFR': (0.20, 300.0, 0, 50000),
-            'hipBL_to_legBL': (0.20, 300.0, 0, 50000),
-            'hipBR_to_legBR': (0.20, 300.0, 0, 50000),
-            'legFL_to_feetFL': (500.0, 1000.0, 0, 50000),
-            'legFR_to_feetFR': (500.0, 1000.0, 0, 50000),
-            'legBL_to_feetBL': (500.0, 1000.0, 0, 50000),
-            'legBR_to_feetBR': (500.0, 1000.0, 0, 50000),
+            'hipFL_to_legFL': (200, 600.0, 0, 50000),
+            'hipFR_to_legFR': (200, 600.0, 0.1, 50000),
+            'hipBL_to_legBL': (200, 600.0, 0, 50000),
+            'hipBR_to_legBR': (200, 600.0, 0.1, 50000),
+            'legFL_to_feetFL': (500.50, 1000.0, 0, 50000),
+            'legFR_to_feetFR': (500.50, 1000.0, 0, 50000),
+            'legBL_to_feetBL': (0.50, 1000.0, 0, 50000),
+            'legBR_to_feetBR': (0.50, 1000.0, 0, 50000),
         }
 
         num_joints = p.getNumJoints(robot)
@@ -64,10 +64,10 @@ class RobotFourWheelLinearCurve(RobotScenario):
 
         #    joint name : (target speed [rad/s], P gain [Nm/(rad/s)], D gain [Nm·s/rad], max torque [Nm])
         speed_params = {
-            'feetFL_to_wheelFL': (5, 100.0),
-            'feetFR_to_wheelFR': (10.0, 100.0),
-            'feetBL_to_wheelBL': (5, 100.0),
-            'feetBR_to_wheelBR': (10.0, 100.0),
+            'feetFL_to_wheelFL': (10*2*pi, 100.0),
+            'feetFR_to_wheelFR': (9.0*2*pi, 100.0),
+            'feetBL_to_wheelBL': (9.8*2*pi, 100.0),
+            'feetBR_to_wheelBR': (8.8*2*pi, 100.0),
         }
 
         # Build mapping from joint names to indices
