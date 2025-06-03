@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QApplication
 from simulation.simulator import Simulator
 from simulation.model import load_model
 from simulation.commands import CommandHandler
-
+import pybullet as p
 
 def main():
     app = QApplication([])  # Ensure QApplication is initialized first
@@ -16,8 +16,7 @@ def main():
     #   RobotFourWheelLinearCurve
     #   RobotThreeWheelLinearStraight
     #   RobotThreeWheelLinearCurve
-    model = load_model(simulator.physics_client, variant="RobotThreeWheelLinearStraight", time_step=1/240)
-
+    model = load_model(simulator.physics_client, variant="RobotFourWheelLinearCurve", time_step=1/240)
 
     commands = CommandHandler(simulator)
     simulator.register_command_handler(commands)

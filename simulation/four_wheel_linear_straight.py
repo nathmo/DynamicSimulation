@@ -13,9 +13,9 @@ def terrain_fn_flat(x, y):
 
 class RobotFourWheelLinearStraight(RobotScenario):
     def load(self):
-        plane  = generate_terrain_from_function(terrain_fn_flat, x_size=100, y_size=100, resolution=1)
+        plane  = generate_terrain_from_function(terrain_fn_A, x_size=100.0, y_size=20.0, resolution=0.1, z_scale=1.0, base_z=0.5)
 
-        robot = p.loadURDF("urdf/robotPivotFourWheel.urdf", basePosition=[0, 0, 1],
+        robot = p.loadURDF("urdf/robotLinearFourWheel.urdf", basePosition=[0, 0, 1],
                            baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
                            useFixedBase=True)
         p.changeDynamics(plane, -1, restitution=0.0, lateralFriction=1.0)
@@ -23,14 +23,14 @@ class RobotFourWheelLinearStraight(RobotScenario):
         p.getContactPoints(bodyA=robot)
         # joint name, stiffness K (Nm/rad), damping C (Nms/rad), rest position (rad), max torque
         spring_params = {
-            'hipFL_to_fourcheFL': (0.20, 300.0, 0, 50000),
-            'hipFR_to_fourcheFR': (0.20, 300.0, 0, 50000),
-            'hipBL_to_fourcheBL': (0.20, 300.0, 0, 50000),
-            'hipBR_to_fourcheBR': (0.20, 300.0, 0, 50000),
-            'base_link_to_hipFL': (500.0, 1000.0, -pi / 5, 50000),
-            'base_link_to_hipFR': (500.0, 1000.0, -pi / 4, 50000),
-            'base_link_to_hipBL': (500.0, 1000.0, pi / 5, 50000),
-            'base_link_to_hipBR': (500.0, 1000.0, pi / 4, 50000),
+            'hipFL_to_legFL': (0.20, 300.0, 0, 50000),
+            'hipFR_to_legFR': (0.20, 300.0, 0, 50000),
+            'hipBL_to_legBL': (0.20, 300.0, 0, 50000),
+            'hipBR_to_legBR': (0.20, 300.0, 0, 50000),
+            'legFL_to_feetFL': (500.0, 1000.0, 0, 50000),
+            'legFR_to_feetFR': (500.0, 1000.0, 0, 50000),
+            'legBL_to_feetBL': (500.0, 1000.0, 0, 50000),
+            'legBR_to_feetBR': (500.0, 1000.0, 0, 50000),
         }
 
         num_joints = p.getNumJoints(robot)
@@ -64,10 +64,10 @@ class RobotFourWheelLinearStraight(RobotScenario):
 
         #    joint name : (target speed [rad/s], P gain [Nm/(rad/s)], D gain [Nm·s/rad], max torque [Nm])
         speed_params = {
-            'fourcheFL_to_wheelFL': (5, 100.0),
-            'fourcheFR_to_wheelFR': (10.0, 100.0),
-            'fourcheBL_to_wheelBL': (5, 100.0),
-            'fourcheBR_to_wheelBR': (10.0, 100.0),
+            'feetFL_to_wheelFL': (5, 100.0),
+            'feetFR_to_wheelFR': (10.0, 100.0),
+            'feetBL_to_wheelBL': (5, 100.0),
+            'feetBR_to_wheelBR': (10.0, 100.0),
         }
 
         # Build mapping from joint names to indices
