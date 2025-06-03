@@ -14,7 +14,7 @@ def terrain_fn_flat(x, y):
 
 class RobotThreeWheelLinearStraight(RobotScenario):
     def load(self):
-        plane = generate_terrain_from_function(terrain_fn_flat, x_size=100, y_size=100, resolution=1)
+        plane = generate_terrain_from_function(terrain_fn_A, x_size=100.0, y_size=20.0, resolution=0.1, z_scale=1.0, base_z=0.5)
 
         robot = p.loadURDF("urdf/robotLinearThreeWheel.urdf", basePosition=[0, 0, 1],
                            baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
@@ -24,10 +24,10 @@ class RobotThreeWheelLinearStraight(RobotScenario):
         p.getContactPoints(bodyA=robot)
         # joint name, stiffness K (Nm/rad), damping C (Nms/rad), rest position (rad), max torque
         spring_params = {
-            'hipFL_to_fourcheFL': (2, 300.0, 0, 50000),
-            'hipFR_to_fourcheFR': (2, 300.0, 0, 50000),
-            'base_link_to_hipFL': (500.0, 1000.0, pi / 4.5, 50000),
-            'base_link_to_hipFR': (500.0, 1000.0, pi / 4, 50000),
+            'hipFL_to_legFL': (5, 500.0, 0, 50000),
+            'hipFR_to_legFR': (5, 500.0, 0, 50000),
+            'legFL_to_feetFL': (50.0, 100.0, 0, 50000),
+            'legFR_to_feetFR': (50.0, 100.0, 0, 50000),
         }
 
         num_joints = p.getNumJoints(robot)
@@ -61,8 +61,8 @@ class RobotThreeWheelLinearStraight(RobotScenario):
 
         #    joint name : (target speed [rad/s], P gain [Nm/(rad/s)], D gain [Nm·s/rad], max torque [Nm])
         speed_params = {
-            'fourcheFL_to_wheelFL': (-5, 100.0),
-            'fourcheFR_to_wheelFR': (-20.0, 100.0),
+            'feetFL_to_wheelFL': (-10.0, 100.0),
+            'feetFR_to_wheelFR': (-10.0, 100.0),
         }
 
         # Build mapping from joint names to indices
