@@ -11,7 +11,7 @@ def terrain_fn_A(x, y):
 def terrain_fn_flat(x, y):
     return np.zeros_like(x)
 
-class RobotFourWheelPivotCurve(RobotScenario):
+class RobotFourWheelLinearStraight(RobotScenario):
     def load(self):
         plane  = generate_terrain_from_function(terrain_fn_flat, x_size=100, y_size=100, resolution=1)
 

@@ -3,7 +3,7 @@ import pybullet_data
 import time
 import os
 from datetime import datetime
-
+from visualization.plotter import Plotter
 
 class Simulator:
     def __init__(self, time_step=1 / 240):
@@ -53,6 +53,9 @@ class Simulator:
             self.start_recording()
 
         try:
+            if (plot):
+                plotter = Plotter(model.get_list_of_segment())
+                self.register_plotter(plotter)
             while True:
                 start_time = time.perf_counter()
 

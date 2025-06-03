@@ -16,7 +16,7 @@ class RobotThreeWheelPivotCurve(RobotScenario):
     def load(self):
         plane = generate_terrain_from_function(terrain_fn_flat, x_size=100, y_size=100, resolution=1)
 
-        robot = p.loadURDF("urdf/robot_3wheel.urdf", basePosition=[0, 0, 1],
+        robot = p.loadURDF("urdf/robotPivotThreeWheel.urdf", basePosition=[0, 0, 1],
                            baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
                            useFixedBase=True)
         p.changeDynamics(plane, -1, restitution=0.0, lateralFriction=1.0)
@@ -24,9 +24,9 @@ class RobotThreeWheelPivotCurve(RobotScenario):
         p.getContactPoints(bodyA=robot)
         # joint name, stiffness K (Nm/rad), damping C (Nms/rad), rest position (rad), max torque
         spring_params = {
-            'hipFL_to_fourcheFL': (0.20, 300.0, 0, 50000),
-            'hipFR_to_fourcheFR': (0.20, 300.0, 0, 50000),
-            'base_link_to_hipFL': (500.0, 1000.0, pi / 5, 50000),
+            'hipFL_to_fourcheFL': (2, 300.0, 0, 50000),
+            'hipFR_to_fourcheFR': (2, 300.0, 0, 50000),
+            'base_link_to_hipFL': (500.0, 1000.0, pi / 4.5, 50000),
             'base_link_to_hipFR': (500.0, 1000.0, pi / 4, 50000),
         }
 
@@ -62,7 +62,7 @@ class RobotThreeWheelPivotCurve(RobotScenario):
         #    joint name : (target speed [rad/s], P gain [Nm/(rad/s)], D gain [Nm·s/rad], max torque [Nm])
         speed_params = {
             'fourcheFL_to_wheelFL': (-5, 100.0),
-            'fourcheFR_to_wheelFR': (-10.0, 100.0),
+            'fourcheFR_to_wheelFR': (-20.0, 100.0),
         }
 
         # Build mapping from joint names to indices

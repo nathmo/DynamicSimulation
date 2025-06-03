@@ -26,8 +26,8 @@ class Plotter(QMainWindow):
             link: {"time": [], "position": [], "velocity": [], "acceleration": [], "force": []}
             for link in self.bodies
         }
-        # Create subplots once for all bodies and 4 metrics
-        self.fig, self.axes = plt.subplots(self.n_bodies, 4, figsize=(12, 3 * self.n_bodies), squeeze=False)
+        # Create subplots once for all bodies and 4 metrics  (size is in inch, given by figsize)
+        self.fig, self.axes = plt.subplots(self.n_bodies, 4, figsize=(18, 8 * self.n_bodies), squeeze=False)
         self.canvas = FigureCanvas(self.fig)
 
         # Initialize line plots for each link and metric
@@ -38,6 +38,9 @@ class Plotter(QMainWindow):
                 self.axes[i, j].set_title(f"Body {link} - {metric}")
                 self.axes[i, j].legend()
                 self.lines[(link, metric)] = line
+
+        self.fig.tight_layout(pad=0.5)
+        self.fig.subplots_adjust(hspace=1.0)
 
         # Qt layout setup
         central_widget = QWidget()

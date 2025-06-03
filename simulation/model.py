@@ -9,7 +9,10 @@ from .four_wheel_pivot_straight import RobotFourWheelPivotStraight
 from .four_wheel_pivot_curve import RobotFourWheelPivotCurve
 from .three_wheel_pivot_straight import RobotThreeWheelPivotStraight
 from .three_wheel_pivot_curve import RobotThreeWheelPivotCurve
-
+from .four_wheel_linear_straight import RobotFourWheelLinearStraight
+from .four_wheel_linear_curve import RobotFourWheelLinearCurve
+from .three_wheel_linear_straight import RobotThreeWheelLinearStraight
+from .three_wheel_linear_curve import RobotThreeWheelLinearCurve
 # Top-level Model that wraps scenario
 class Model:
     scenario_classes = {
@@ -19,6 +22,10 @@ class Model:
         "RobotFourWheelPivotCurve": RobotFourWheelPivotCurve,
         "RobotThreeWheelPivotStraight": RobotThreeWheelPivotStraight,
         "RobotThreeWheelPivotCurve": RobotThreeWheelPivotCurve,
+        "RobotFourWheelLinearStraight": RobotFourWheelLinearStraight,
+        "RobotFourWheelLinearCurve": RobotFourWheelLinearCurve,
+        "RobotThreeWheelLinearStraight": RobotThreeWheelLinearStraight,
+        "RobotThreeWheelLinearCurve": RobotThreeWheelLinearCurve,
     }
 
     def __init__(self, physics_client, time_step, variant="default"):

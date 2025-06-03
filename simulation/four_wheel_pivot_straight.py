@@ -14,9 +14,9 @@ def terrain_fn_flat(x, y):
 
 class RobotFourWheelPivotStraight(RobotScenario):
     def load(self):
-        plane  = generate_terrain_from_function(terrain_fn_A)
+        plane  = generate_terrain_from_function(terrain_fn_A, x_size=100.0, y_size=10.0, resolution=0.05, z_scale=1.0, base_z=0.5)
 
-        robot = p.loadURDF("urdf/robot.urdf", basePosition=[0, 0, 1.2],
+        robot = p.loadURDF("urdf/robotPivotFourWheel.urdf", basePosition=[0, 0, 1.2],
                            baseOrientation=p.getQuaternionFromEuler([0, 0, math.radians(90)]),
                            useFixedBase=True)
         p.changeDynamics(plane, -1, restitution=0.0, lateralFriction=1.0)
